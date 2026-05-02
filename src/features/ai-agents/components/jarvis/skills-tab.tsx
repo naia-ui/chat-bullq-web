@@ -135,9 +135,6 @@ export function JarvisSkillsTab() {
 
             <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
               <span className="inline-flex items-center gap-1">
-                <Wrench className="h-3 w-3" /> {skill.tools.length} tools
-              </span>
-              <span className="inline-flex items-center gap-1">
                 <Bot className="h-3 w-3" /> {skill._count?.agents ?? 0} agents
               </span>
               <span className="inline-flex items-center gap-1">
@@ -145,16 +142,15 @@ export function JarvisSkillsTab() {
               </span>
             </div>
 
-            {skill.tools.length > 0 && (
+            {skill.tool && (
               <div className="mt-2 flex flex-wrap gap-1">
-                {skill.tools.map(({ tool }) => (
-                  <code
-                    key={tool.id}
-                    className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-mono text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                  >
-                    {tool.name}
-                  </code>
-                ))}
+                <span className="text-[10px] text-zinc-500">via</span>
+                <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-mono text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  {skill.tool.name}
+                </code>
+                <span className="rounded-full bg-zinc-200 px-1.5 py-0.5 text-[9px] uppercase text-zinc-600 dark:bg-zinc-700">
+                  {skill.source}
+                </span>
               </div>
             )}
           </div>

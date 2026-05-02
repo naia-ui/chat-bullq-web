@@ -91,11 +91,33 @@ export function SkillVersionsDialog({ skill, onClose }: Props) {
                       </span>
                     </div>
                     <div>
-                      <span className="text-zinc-500">Tools:</span>{' '}
+                      <span className="text-zinc-500">Source:</span>{' '}
                       <span className="text-zinc-700 dark:text-zinc-300">
-                        {v.toolIds.length}
+                        {v.source}
                       </span>
                     </div>
+                    <div>
+                      <span className="text-zinc-500">Tool:</span>{' '}
+                      <span className="text-zinc-700 dark:text-zinc-300">
+                        {v.toolId ?? '—'}
+                      </span>
+                    </div>
+                    {v.source === 'HTTP' && v.httpPath && (
+                      <div>
+                        <span className="text-zinc-500">HTTP:</span>{' '}
+                        <code className="font-mono text-zinc-700 dark:text-zinc-300">
+                          {v.httpMethod} {v.httpPath}
+                        </code>
+                      </div>
+                    )}
+                    {v.source === 'SQL' && v.sqlQuery && (
+                      <div>
+                        <span className="text-zinc-500">SQL:</span>
+                        <pre className="mt-1 max-h-32 overflow-auto rounded bg-zinc-50 p-2 font-mono text-[10px] dark:bg-zinc-800">
+                          {v.sqlQuery}
+                        </pre>
+                      </div>
+                    )}
                     {v.promptInstructions && (
                       <div>
                         <span className="text-zinc-500">Prompt:</span>

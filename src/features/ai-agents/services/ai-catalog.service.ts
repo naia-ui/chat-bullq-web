@@ -1,49 +1,44 @@
 import { api } from '@/lib/api';
 
-export type ToolSource = 'BUILTIN' | 'CUSTOM_HTTP' | 'CUSTOM_SQL';
+// ─── Types ────────────────────────────────────────────────────────
 
+export type ToolSource = 'CUSTOM_HTTP' | 'CUSTOM_SQL';
+export type SkillSource = 'BUILTIN' | 'HTTP' | 'SQL';
+
+/**
+ * Tool = connection provider (Trivapp HTTP base+auth, or Hotwebinar SQL DSN).
+ * Reused by many Skills.
+ */
 export interface AiTool {
   id: string;
-  organizationId: string | null;
+  organizationId: string;
   name: string;
   description: string;
   source: ToolSource;
-  parameters: Record<string, unknown>;
-  httpMethod: string | null;
-  httpUrl: string | null;
+  httpBaseUrl: string | null;
   httpHeaders: Record<string, string> | null;
-  httpBodyTemplate: string | null;
-  responseMap: Record<string, string> | null;
   sqlConnectionRef: string | null;
-  sqlQuery: string | null;
-  sqlParamMap: Array<{ name?: string; source: string }> | null;
-  sqlReadOnly: boolean;
-  sqlMaxRows: number;
-  timeoutMs: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  _count?: { skills: number };
+  skills?: Array<{ id: string; name: string }>;
 }
 
-export interface UpsertCustomToolInput {
+export interface UpsertToolInput {
   name: string;
   description: string;
-  parameters: Record<string, unknown>;
-  source: 'CUSTOM_HTTP' | 'CUSTOM_SQL';
-  httpMethod?: string;
-  httpUrl?: string;
+  source: ToolSource;
+  httpBaseUrl?: string;
   httpHeaders?: Record<string, string>;
-  httpBodyTemplate?: string;
-  responseMap?: Record<string, string>;
   sqlConnectionRef?: string;
-  sqlQuery?: string;
-  sqlParamMap?: Array<{ name?: string; source: string }>;
-  sqlReadOnly?: boolean;
-  sqlMaxRows?: number;
-  timeoutMs?: number;
   isActive?: boolean;
 }
 
+/**
+ * Skill = the LLM-callable function. Binds to a Tool (provider) and carries
+ * the per-call invocation (HTTP path/method/body or SQL query).
+ */
 export interface AiSkill {
   id: string;
   organizationId: string;
@@ -51,11 +46,22 @@ export interface AiSkill {
   description: string;
   category: string | null;
   promptInstructions: string | null;
+  source: SkillSource;
+  parameters: Record<string, unknown>;
+  toolId: string | null;
+  httpMethod: string | null;
+  httpPath: string | null;
+  httpHeadersExtra: Record<string, string> | null;
+  httpBodyTemplate: string | null;
+  responseMap: Record<string, string> | null;
+  sqlQuery: string | null;
+  sqlParamMap: Array<{ name?: string; source: string }> | null;
+  sqlReadOnly: boolean;
+  sqlMaxRows: number;
+  timeoutMs: number;
   currentVersion: number;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  tools: Array<{ tool: AiTool }>;
+  tool?: AiTool | { id: string; name: string; source: ToolSource } | null;
   agents?: Array<{ agent: { id: string; name: string } }>;
   _count?: { agents: number; versions: number };
 }
@@ -68,7 +74,19 @@ export interface AiSkillVersion {
   description: string;
   category: string | null;
   promptInstructions: string | null;
-  toolIds: string[];
+  source: SkillSource;
+  parameters: Record<string, unknown>;
+  toolId: string | null;
+  httpMethod: string | null;
+  httpPath: string | null;
+  httpHeadersExtra: Record<string, string> | null;
+  httpBodyTemplate: string | null;
+  responseMap: Record<string, string> | null;
+  sqlQuery: string | null;
+  sqlParamMap: Array<{ name?: string; source: string }> | null;
+  sqlReadOnly: boolean;
+  sqlMaxRows: number;
+  timeoutMs: number;
   changedById: string | null;
   changeNote: string | null;
   createdAt: string;
@@ -79,13 +97,27 @@ export interface UpsertSkillInput {
   description: string;
   category?: string;
   promptInstructions?: string;
-  toolIds: string[];
+  source: 'HTTP' | 'SQL';
+  parameters: Record<string, unknown>;
+  toolId: string;
+  httpMethod?: string;
+  httpPath?: string;
+  httpHeadersExtra?: Record<string, string>;
+  httpBodyTemplate?: string;
+  responseMap?: Record<string, string>;
+  sqlQuery?: string;
+  sqlParamMap?: Array<{ name?: string; source: string }>;
+  sqlReadOnly?: boolean;
+  sqlMaxRows?: number;
+  timeoutMs?: number;
   isActive?: boolean;
   changeNote?: string;
 }
 
+// ─── Service ──────────────────────────────────────────────────────
+
 export const aiCatalogService = {
-  // ── Tools ──────────────────────────────────────────────────────
+  // Tools
   async listTools(): Promise<AiTool[]> {
     const { data } = await api.get('/ai-catalog/tools');
     return data.data ?? data;
@@ -94,11 +126,11 @@ export const aiCatalogService = {
     const { data } = await api.get(`/ai-catalog/tools/${id}`);
     return data.data ?? data;
   },
-  async createTool(input: UpsertCustomToolInput): Promise<AiTool> {
+  async createTool(input: UpsertToolInput): Promise<AiTool> {
     const { data } = await api.post('/ai-catalog/tools', input);
     return data.data ?? data;
   },
-  async updateTool(id: string, input: UpsertCustomToolInput): Promise<AiTool> {
+  async updateTool(id: string, input: UpsertToolInput): Promise<AiTool> {
     const { data } = await api.patch(`/ai-catalog/tools/${id}`, input);
     return data.data ?? data;
   },
@@ -106,7 +138,7 @@ export const aiCatalogService = {
     await api.delete(`/ai-catalog/tools/${id}`);
   },
 
-  // ── Skills ─────────────────────────────────────────────────────
+  // Skills
   async listSkills(): Promise<AiSkill[]> {
     const { data } = await api.get('/ai-catalog/skills');
     return data.data ?? data;
@@ -131,11 +163,8 @@ export const aiCatalogService = {
     await api.delete(`/ai-catalog/skills/${id}`);
   },
 
-  // ── Agent attachments ─────────────────────────────────────────
+  // Agent ↔ skills
   async setAgentSkills(agentId: string, skillIds: string[]): Promise<void> {
     await api.put(`/ai-catalog/agents/${agentId}/skills`, { skillIds });
-  },
-  async setAgentExtraTools(agentId: string, toolIds: string[]): Promise<void> {
-    await api.put(`/ai-catalog/agents/${agentId}/extra-tools`, { toolIds });
   },
 };
