@@ -140,11 +140,11 @@ export default function SettingsAiPage() {
         <label className="flex cursor-pointer items-start justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-              IA habilitada
+              IA habilitada (geral)
             </p>
             <p className="mt-0.5 text-xs text-zinc-500">
-              Quando desligado, NENHUM agente responde — independente de
-              configuração de canal/conversa.
+              Padrão pra novas conversas. Conversas individuais podem
+              forçar IA ON ou OFF e sobrepor essa config.
             </p>
           </div>
           <Toggle checked={aiEnabled} onChange={setAiEnabled} />

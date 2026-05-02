@@ -49,7 +49,7 @@ export interface Conversation {
   isGroup: boolean;
   lastMessageAt: string | null;
   createdAt: string;
-  aiEnabled?: boolean;
+  aiEnabled?: boolean | null;
   aiDisabledBy?: string | null;
   aiDisabledAt?: string | null;
   activeAgentId?: string | null;
@@ -174,7 +174,7 @@ export const inboxService = {
 
   async toggleAi(
     conversationId: string,
-    enabled: boolean,
+    enabled: boolean | null,
   ): Promise<Conversation> {
     const { data } = await api.patch(`/conversations/${conversationId}/ai`, {
       enabled,

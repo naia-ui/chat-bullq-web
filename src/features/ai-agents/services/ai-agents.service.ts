@@ -121,7 +121,111 @@ export const aiAgentsService = {
     const { data } = await api.get(`/ai-agents/${id}/runs`, { params: { limit } });
     return data.data ?? data;
   },
+
+  async feed(params: { agentId?: string; limit?: number } = {}): Promise<FeedRun[]> {
+    const { data } = await api.get('/ai-agents/runs/feed', { params });
+    return data.data ?? data;
+  },
+
+  async orgStats(period: Period = '7d'): Promise<OrgStats> {
+    const { data } = await api.get('/ai-agents/stats/overview', {
+      params: { period },
+    });
+    return data.data ?? data;
+  },
+
+  async agentStats(id: string, period: Period = '7d'): Promise<AgentStats> {
+    const { data } = await api.get(`/ai-agents/${id}/stats`, {
+      params: { period },
+    });
+    return data.data ?? data;
+  },
 };
+
+export type Period = '24h' | '7d' | '30d';
+
+export interface FeedRun {
+  id: string;
+  agentId: string;
+  conversationId: string;
+  modelId: string;
+  status: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'SKIPPED';
+  finalAction: AgentRun['finalAction'];
+  errorMessage: string | null;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  costUsd: string;
+  durationMs: number | null;
+  startedAt: string;
+  finishedAt: string | null;
+  agent: { id: string; name: string; kind: AgentKind };
+  toolCalls: Array<{ toolName: string }>;
+}
+
+export interface OrgStats {
+  period: Period;
+  since: string;
+  runs: {
+    total: number;
+    completed: number;
+    failed: number;
+    skipped: number;
+    successRate: number | null;
+  };
+  tokens: {
+    input: number;
+    output: number;
+    cacheRead: number;
+    cacheWrite: number;
+    total: number;
+  };
+  cost: { usd: number; avgPerRun: number };
+  latency: { p50: number | null; p95: number | null };
+  monthlyCap: {
+    used: number;
+    cap: number | null;
+    percentUsed: number | null;
+  };
+  byModel: Array<{
+    modelId: string;
+    runs: number;
+    tokens: number;
+    cost: number;
+  }>;
+  byAgent: Array<{
+    agentId: string;
+    runs: number;
+    tokens: number;
+    cost: number;
+  }>;
+  byFinalAction: Record<string, number>;
+  tools: Array<{ name: string; calls: number }>;
+  handoffs: Array<{
+    fromAgentId: string;
+    toAgentId: string;
+    count: number;
+  }>;
+}
+
+export interface AgentStats {
+  period: Period;
+  since: string;
+  runs: {
+    total: number;
+    completed: number;
+    failed: number;
+    successRate: number | null;
+  };
+  tokens: OrgStats['tokens'];
+  cost: OrgStats['cost'];
+  latency: OrgStats['latency'];
+  byFinalAction: Record<string, number>;
+  byModel: OrgStats['byModel'];
+  tools: OrgStats['tools'];
+  handoffs: { sent: number; received: number };
+}
 
 export const CURATED_MODELS = [
   {

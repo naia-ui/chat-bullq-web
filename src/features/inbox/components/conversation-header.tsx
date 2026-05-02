@@ -8,9 +8,8 @@ import {
   XCircle,
   RotateCcw,
   RefreshCw,
-  Bot,
-  BotOff,
 } from 'lucide-react';
+import { ConversationAiToggle } from './conversation-ai-toggle';
 import { inboxService, type Conversation } from '../services/inbox.service';
 
 interface ConversationHeaderProps {
@@ -95,41 +94,20 @@ export function ConversationHeader({ conversation, onUpdate }: ConversationHeade
       </div>
 
       <div className="flex items-center gap-1.5">
-        <button
-          onClick={() =>
-            handleAction(
-              () =>
-                inboxService.toggleAi(
-                  conversation.id,
-                  !(conversation.aiEnabled ?? true),
-                ),
-              conversation.aiEnabled === false
-                ? 'IA reativada nesta conversa'
-                : 'IA pausada nesta conversa',
-            )
-          }
+        <ConversationAiToggle
+          conversation={conversation}
           disabled={isLoading}
-          title={
-            conversation.aiEnabled === false
-              ? 'Reativar IA nesta conversa'
-              : 'Pausar IA nesta conversa'
-          }
-          className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
-            conversation.aiEnabled === false
-              ? 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
-              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:hover:bg-emerald-900/30'
-          }`}
-        >
-          {conversation.aiEnabled === false ? (
-            <>
-              <BotOff className="h-3.5 w-3.5" /> IA pausada
-            </>
-          ) : (
-            <>
-              <Bot className="h-3.5 w-3.5" /> IA ativa
-            </>
-          )}
-        </button>
+          onChange={async (next) => {
+            await handleAction(
+              () => inboxService.toggleAi(conversation.id, next),
+              next === null
+                ? 'IA voltou pro padrão (segue config global)'
+                : next
+                  ? 'IA forçada nesta conversa (sobrepõe global)'
+                  : 'IA pausada nesta conversa',
+            );
+          }}
+        />
         <button
           onClick={handleSync}
           disabled={isSyncing}
