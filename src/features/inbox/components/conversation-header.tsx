@@ -8,6 +8,11 @@ import {
   XCircle,
   RotateCcw,
   RefreshCw,
+  MessageSquare,
+  Instagram,
+  Phone,
+  Mail,
+  Send,
 } from 'lucide-react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
 import { inboxService, type Conversation } from '../services/inbox.service';
@@ -15,6 +20,53 @@ import { inboxService, type Conversation } from '../services/inbox.service';
 interface ConversationHeaderProps {
   conversation: Conversation;
   onUpdate: () => void;
+}
+
+function ChannelBadge({ type, name }: { type: string; name: string }) {
+  const t = type.toUpperCase();
+  const isWhats = t.includes('WHATSAPP') || t.includes('ZAPPFY');
+  const isInsta = t.includes('INSTAGRAM');
+  const isTelegram = t.includes('TELEGRAM');
+  const isEmail = t.includes('EMAIL') || t.includes('MAIL');
+  const isSms = t.includes('SMS');
+
+  let Icon = MessageSquare;
+  let label = 'Chat';
+  let cls =
+    'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300';
+
+  if (isWhats) {
+    Icon = Phone;
+    label = 'WhatsApp';
+    cls = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+  } else if (isInsta) {
+    Icon = Instagram;
+    label = 'Instagram';
+    cls = 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400';
+  } else if (isTelegram) {
+    Icon = Send;
+    label = 'Telegram';
+    cls = 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
+  } else if (isEmail) {
+    Icon = Mail;
+    label = 'Email';
+    cls = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+  } else if (isSms) {
+    Icon = MessageSquare;
+    label = 'SMS';
+    cls = 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+  }
+
+  return (
+    <span
+      title={name}
+      className={`mt-1 inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${cls}`}
+    >
+      <Icon className="h-3 w-3" />
+      {label}
+      <span className="font-normal normal-case opacity-70">· {name}</span>
+    </span>
+  );
 }
 
 function HeaderAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
@@ -83,13 +135,17 @@ export function ConversationHeader({ conversation, onUpdate }: ConversationHeade
           name={conversation.contact.name}
           avatarUrl={conversation.contact.avatarUrl}
         />
-        <div>
+        <div className="flex flex-col">
           <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
             {conversation.contact.name || conversation.contact.phone || 'Desconhecido'}
           </div>
           {conversation.contact.phone && conversation.contact.name && (
             <div className="text-xs text-zinc-500">{conversation.contact.phone}</div>
           )}
+          <ChannelBadge
+            type={conversation.channel.type}
+            name={conversation.channel.name}
+          />
         </div>
       </div>
 
