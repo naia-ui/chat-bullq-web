@@ -2,10 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import {
-  aiAgentsService,
-  type FeedRun,
-} from '../../services/ai-agents.service';
+import { type FeedRun } from '../../services/ai-agents.service';
 import {
   FINAL_ACTION_META,
   STATUS_META,
@@ -136,37 +133,69 @@ function RunRow({
           {fmtMs(run.durationMs)}
         </td>
       </tr>
-      {isExpanded && (
-        <RunDetail runId={run.id} fallbackError={run.errorMessage} />
-      )}
+      {isExpanded && <RunDetail run={run} fallbackError={run.errorMessage} />}
     </>
   );
 }
 
-function RunDetail({ runId, fallbackError }: { runId: string; fallbackError: string | null }) {
-  const [detail, setDetail] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  if (!detail && !loading) {
-    setLoading(true);
-    aiAgentsService
-      .listRuns('', 1)
-      .catch(() => null)
-      .finally(() => setLoading(false));
-    // we don't have a /runs/:id endpoint yet — show what we have inline.
-  }
-
+function RunDetail({
+  run,
+  fallbackError,
+}: {
+  run: FeedRun;
+  fallbackError: string | null;
+}) {
+  const tools = run.toolCalls ?? [];
   return (
     <tr className="border-b border-zinc-100 bg-zinc-50/40 dark:border-zinc-800 dark:bg-zinc-900/40">
       <td colSpan={9} className="px-6 py-3">
-        {fallbackError ? (
-          <p className="text-xs text-red-600 dark:text-red-400">
+        {fallbackError && (
+          <p className="mb-2 text-xs text-red-600 dark:text-red-400">
             <strong>Erro:</strong> {fallbackError}
           </p>
-        ) : (
-          <p className="text-xs text-zinc-500">
-            Run id: <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">{runId}</code>. Ferramentas chamadas e payloads disponíveis no detalhe da conversa.
-          </p>
+        )}
+        <div className="grid gap-3 text-xs sm:grid-cols-2 md:grid-cols-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase text-zinc-500">
+              Run id
+            </p>
+            <code className="mt-0.5 block truncate rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] dark:bg-zinc-800">
+              {run.id}
+            </code>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase text-zinc-500">
+              Conversa
+            </p>
+            <code className="mt-0.5 block truncate rounded bg-zinc-100 px-1.5 py-0.5 text-[11px] dark:bg-zinc-800">
+              {run.conversationId}
+            </code>
+          </div>
+          <div>
+            <p className="text-[10px] font-semibold uppercase text-zinc-500">
+              Cache
+            </p>
+            <p className="mt-0.5 tabular-nums text-zinc-700 dark:text-zinc-300">
+              {fmtNum(run.cacheReadTokens)} read · {fmtNum(run.cacheWriteTokens)} write
+            </p>
+          </div>
+        </div>
+        {tools.length > 0 && (
+          <div className="mt-3">
+            <p className="text-[10px] font-semibold uppercase text-zinc-500">
+              Tools chamadas ({tools.length})
+            </p>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {tools.map((t, i) => (
+                <span
+                  key={i}
+                  className="rounded bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                >
+                  {t.toolName}
+                </span>
+              ))}
+            </div>
+          </div>
         )}
       </td>
     </tr>

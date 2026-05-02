@@ -40,12 +40,11 @@ export function AgentsList() {
     <div className="p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            <Bot className="h-5 w-5 text-primary" />
-            Agentes de IA
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            Agentes cadastrados
           </h2>
           <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-            Atendentes virtuais que respondem mensagens automaticamente
+            Personas que respondem mensagens automaticamente
           </p>
         </div>
         <button
