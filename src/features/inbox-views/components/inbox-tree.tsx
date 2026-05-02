@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
-import { useSearchParams, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Inbox,
@@ -56,7 +55,15 @@ const STORAGE_KEY = 'inbox-tree-expanded';
 export function InboxTree() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const qc = useQueryClient();
+
+  // Programmatic navigation that GUARANTEES the query string resets when
+  // jumping back to "Geral" from a custom view. <Link href="/inbox"> on its
+  // own keeps `?view=…` in the URL because Next treats same-pathname clicks
+  // as a no-op for query params.
+  const goGeral = () => router.push('/inbox');
+  const goView = (id: string) => router.push(`/inbox?view=${id}`);
   const [expanded, setExpanded] = useState<boolean>(() => {
     if (typeof window === 'undefined') return true;
     return window.localStorage.getItem(STORAGE_KEY) !== '0';
@@ -107,9 +114,10 @@ export function InboxTree() {
             <ChevronRight className="size-3.5" />
           )}
         </button>
-        <Link
-          href="/inbox"
-          className={`flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium ${
+        <button
+          type="button"
+          onClick={goGeral}
+          className={`flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm font-medium ${
             isInbox && !activeViewId
               ? 'bg-zinc-950/5 text-zinc-950 dark:bg-white/5 dark:text-white'
               : 'text-zinc-700 hover:bg-zinc-950/5 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-white/5 dark:hover:text-white'
@@ -117,14 +125,15 @@ export function InboxTree() {
         >
           <Inbox className="size-5" />
           <span className="flex-1">Inbox</span>
-        </Link>
+        </button>
       </div>
 
       {expanded && (
         <div className="ml-5 space-y-0.5 border-l border-zinc-200 pl-2 dark:border-zinc-800">
-          <Link
-            href="/inbox"
-            className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-xs ${
+          <button
+            type="button"
+            onClick={goGeral}
+            className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs ${
               isInbox && !activeViewId
                 ? 'bg-zinc-950/5 font-medium text-zinc-900 dark:bg-white/5 dark:text-white'
                 : 'text-zinc-600 hover:bg-zinc-950/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white'
@@ -132,7 +141,7 @@ export function InboxTree() {
           >
             <Inbox className="size-3.5 text-zinc-400" />
             <span className="flex-1">Geral</span>
-          </Link>
+          </button>
 
           {views.map((v) => {
             const Icon = VIEW_ICON[v.icon ?? ''] ?? Filter;
@@ -147,9 +156,10 @@ export function InboxTree() {
                     : 'hover:bg-zinc-950/5 dark:hover:bg-white/5'
                 }`}
               >
-                <Link
-                  href={`/inbox?view=${v.id}`}
-                  className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-xs ${
+                <button
+                  type="button"
+                  onClick={() => goView(v.id)}
+                  className={`flex flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs ${
                     isActive
                       ? 'font-medium text-zinc-900 dark:text-white'
                       : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
@@ -158,7 +168,7 @@ export function InboxTree() {
                 >
                   <Icon className={`size-3.5 ${colorCls}`} />
                   <span className="flex-1 truncate">{v.name}</span>
-                </Link>
+                </button>
                 <div className="flex shrink-0 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
                     type="button"
