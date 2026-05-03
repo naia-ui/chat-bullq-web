@@ -3,7 +3,14 @@
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, MessageSquare, User } from 'lucide-react';
+import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import type { CardSummary } from '../services/pipelines.service';
+
+const channelIconByType: Record<string, React.ElementType> = {
+  WHATSAPP_ZAPPFY: ZappfyIcon,
+  WHATSAPP_OFFICIAL: MetaIcon,
+  INSTAGRAM: InstagramIcon,
+};
 
 const formatBRL = (v: number | string | null) => {
   if (v === null || v === undefined || v === '') return null;
@@ -99,7 +106,19 @@ export function KanbanCard({ card, onClick }: Props) {
           <span />
         )}
         <div className="flex shrink-0 items-center gap-1">
-          {card.conversationId && (
+          {card.conversation?.channel && (() => {
+            const ChannelIcon =
+              channelIconByType[card.conversation.channel.type] ?? MessageSquare;
+            return (
+              <span
+                title={`${card.conversation.channel.name} · clique pra abrir a conversa`}
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800"
+              >
+                <ChannelIcon className="h-3 w-3 text-zinc-600 dark:text-zinc-300" />
+              </span>
+            );
+          })()}
+          {!card.conversation && card.conversationId && (
             <MessageSquare
               className="h-3 w-3 text-blue-500"
               aria-label="Tem conversa vinculada"

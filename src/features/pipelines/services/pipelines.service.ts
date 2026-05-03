@@ -59,6 +59,15 @@ export interface CardSummary {
     name: string;
     avatarUrl: string | null;
   } | null;
+  conversation?: {
+    id: string;
+    channelId: string;
+    channel: {
+      id: string;
+      type: string;
+      name: string;
+    };
+  } | null;
 }
 
 export interface BoardResponse {

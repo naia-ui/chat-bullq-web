@@ -18,6 +18,7 @@ import { KanbanColumn } from './kanban-column';
 import { KanbanCard } from './kanban-card';
 import { CardDialog } from './card-dialog';
 import { AddConversationDialog } from './add-conversation-dialog';
+import { ConversationDialog } from '@/features/inbox/components/conversation-dialog';
 
 interface Props {
   pipelineId: string;
@@ -30,6 +31,8 @@ export function KanbanBoard({ pipelineId }: Props) {
   const [editingCard, setEditingCard] = useState<CardSummary | null>(null);
   // Add-conversation dialog (new card from existing conversation)
   const [addStageId, setAddStageId] = useState<string | null>(null);
+  // Conversation popup (when card has a linked conversation, click opens chat).
+  const [viewingConvId, setViewingConvId] = useState<string | null>(null);
 
   const { data: board, isLoading } = useQuery({
     queryKey: ['pipeline-board', pipelineId],
@@ -136,7 +139,12 @@ export function KanbanBoard({ pipelineId }: Props) {
               stage={stage}
               cards={board.cards[stage.id] ?? []}
               onAddCard={() => setAddStageId(stage.id)}
-              onCardClick={(c) => setEditingCard(c)}
+              onCardClick={(c) => {
+                // Click primário: abre a conversa em popup. Sem conversa
+                // vinculada, cai pra edição do card como fallback.
+                if (c.conversationId) setViewingConvId(c.conversationId);
+                else setEditingCard(c);
+              }}
             />
           ))}
         </div>
@@ -166,6 +174,12 @@ export function KanbanBoard({ pipelineId }: Props) {
           qc.invalidateQueries({ queryKey: ['pipeline-board', pipelineId] });
           setAddStageId(null);
         }}
+      />
+
+      <ConversationDialog
+        open={!!viewingConvId}
+        conversationId={viewingConvId}
+        onClose={() => setViewingConvId(null)}
       />
     </>
   );
