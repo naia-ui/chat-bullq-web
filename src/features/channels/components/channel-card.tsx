@@ -4,6 +4,7 @@ import { useState } from 'react';
 import {
   MessageSquare,
   MoreVertical,
+  Pencil,
   Trash2,
   Zap,
   Power,
@@ -19,6 +20,7 @@ import type { Channel } from '../services/channels.service';
 import { channelsService } from '../services/channels.service';
 import { useChannelSync } from '../hooks/use-channel-sync';
 import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
+import { EditChannelDialog } from './edit-channel-dialog';
 
 const channelTypeMap: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   WHATSAPP_ZAPPFY: { label: 'WhatsApp (Zappfy)', icon: ZappfyIcon, color: 'bg-zinc-50 dark:bg-zinc-800' },
@@ -34,6 +36,7 @@ interface ChannelCardProps {
 export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
   const [isTesting, setIsTesting] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [editing, setEditing] = useState(false);
   const meta = channelTypeMap[channel.type] || { label: channel.type, icon: MessageSquare, color: 'bg-gray-500' };
   const Icon = meta.icon;
   const sync = useChannelSync({ channelId: channel.id, channelType: channel.type });
@@ -230,7 +233,14 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
         {showMenu && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-            <div className="absolute right-0 top-full z-20 mt-1 w-40 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+            <div className="absolute right-0 top-full z-20 mt-1 w-48 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-800">
+              <button
+                onClick={() => { setEditing(true); setShowMenu(false); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              >
+                <Pencil className="h-4 w-4" />
+                Editar credenciais
+              </button>
               <button
                 onClick={() => { handleDelete(); setShowMenu(false); }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
@@ -242,6 +252,11 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
           </>
         )}
       </div>
+      <EditChannelDialog
+        channel={editing ? channel : null}
+        onClose={() => setEditing(false)}
+        onSaved={onUpdate}
+      />
     </div>
   );
 }
