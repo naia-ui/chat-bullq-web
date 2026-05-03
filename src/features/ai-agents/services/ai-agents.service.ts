@@ -162,8 +162,23 @@ export const aiAgentsService = {
     return data.data ?? data;
   },
 
-  async feed(params: { agentId?: string; limit?: number } = {}): Promise<FeedRun[]> {
-    const { data } = await api.get('/ai-agents/runs/feed', { params });
+  async feed(
+    params: {
+      agentId?: string;
+      period?: Period | 'all';
+      status?: 'RUNNING' | 'COMPLETED' | 'FAILED' | 'SKIPPED';
+      finalAction?: string;
+      hasErrors?: boolean;
+      limit?: number;
+      cursor?: string;
+    } = {},
+  ): Promise<FeedRun[]> {
+    const { data } = await api.get('/ai-agents/runs/feed', {
+      params: {
+        ...params,
+        hasErrors: params.hasErrors ? '1' : undefined,
+      },
+    });
     return data.data ?? data;
   },
 
@@ -201,7 +216,18 @@ export interface FeedRun {
   startedAt: string;
   finishedAt: string | null;
   agent: { id: string; name: string; kind: AgentKind };
-  toolCalls: Array<{ toolName: string }>;
+  toolCalls: Array<{
+    id: string;
+    toolName: string;
+    input: unknown;
+    output: unknown;
+    error: string | null;
+    durationMs: number | null;
+    createdAt: string;
+  }>;
+  /** Server-computed: count of tool calls flagged as failure (error || ok:false || status>=400). */
+  failedToolCalls?: number;
+  hasFailedToolCalls?: boolean;
 }
 
 export interface OrgStats {

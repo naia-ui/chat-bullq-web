@@ -1,20 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { Bot, BarChart3, User, Sparkles, Wrench } from 'lucide-react';
+import { Bot, BarChart3, User, Sparkles, Wrench, Activity } from 'lucide-react';
 import { AgentsList } from '@/features/ai-agents/components/agents-list';
 import { JarvisOverviewTab } from '@/features/ai-agents/components/jarvis/overview-tab';
 import { JarvisAgentTab } from '@/features/ai-agents/components/jarvis/agent-tab';
 import { JarvisSkillsTab } from '@/features/ai-agents/components/jarvis/skills-tab';
 import { JarvisToolsTab } from '@/features/ai-agents/components/jarvis/tools-tab';
+import { JarvisRunsTab } from '@/features/ai-agents/components/jarvis/runs-tab';
 
-type Tab = 'overview' | 'agents' | 'skills' | 'tools' | 'agent';
+type Tab = 'overview' | 'agents' | 'skills' | 'tools' | 'agent' | 'runs';
 
 const TABS: Array<{ id: Tab; label: string; icon: React.ElementType }> = [
   { id: 'overview', label: 'Visão geral', icon: BarChart3 },
   { id: 'agents', label: 'Agentes', icon: Bot },
   { id: 'skills', label: 'Skills', icon: Sparkles },
   { id: 'tools', label: 'Tools', icon: Wrench },
+  { id: 'runs', label: 'Execuções', icon: Activity },
   { id: 'agent', label: 'Por agente', icon: User },
 ];
 
@@ -57,6 +59,7 @@ export default function AiAgentsPage() {
         {tab === 'agents' && <AgentsList />}
         {tab === 'skills' && <JarvisSkillsTab />}
         {tab === 'tools' && <JarvisToolsTab />}
+        {tab === 'runs' && <JarvisRunsTab />}
         {tab === 'agent' && <JarvisAgentTab />}
       </div>
     </div>
