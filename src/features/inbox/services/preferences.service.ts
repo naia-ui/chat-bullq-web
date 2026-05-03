@@ -7,6 +7,9 @@ export interface InboxPreferences {
   selectedChannelId?: string | null;
   unreadOnly?: boolean;
   archivedOnly?: boolean;
+  /** Quando true, conversas de grupos aparecem no inbox geral. Default
+   *  false — esconde grupos da lista principal pra reduzir ruído. */
+  showGroups?: boolean;
 }
 
 export interface UserPreferences {

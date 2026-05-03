@@ -83,7 +83,7 @@ const statusColors: Record<string, string> = {
   CLOSED: 'bg-zinc-300 dark:bg-zinc-600',
 };
 
-type ListFilter = 'unread' | 'archived';
+type ListFilter = 'unread' | 'archived' | 'groups';
 
 const filterOptions: { label: string; value: ListFilter; icon: React.ElementType; description: string }[] = [
   {
@@ -97,6 +97,12 @@ const filterOptions: { label: string; value: ListFilter; icon: React.ElementType
     value: 'archived',
     icon: Archive,
     description: 'Mostra a inbox arquivada',
+  },
+  {
+    label: 'Grupos',
+    value: 'groups',
+    icon: Users,
+    description: 'Inclui conversas de grupos. Desmarcado = esconde.',
   },
 ];
 
@@ -124,8 +130,14 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   } = useInboxPreferences();
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [archivedOnly, setArchivedOnly] = useState(false);
+  // Default false = grupos NÃO aparecem no inbox geral (regra do JP).
+  // Toggle pra true exibe junto com individuais.
+  const [showGroups, setShowGroups] = useState(false);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
-  const activeFilterCount = (unreadOnly ? 1 : 0) + (archivedOnly ? 1 : 0);
+  // showGroups conta como filtro ativo SÓ quando ON (default OFF é o
+  // comportamento padrão, não merece badge).
+  const activeFilterCount =
+    (unreadOnly ? 1 : 0) + (archivedOnly ? 1 : 0) + (showGroups ? 1 : 0);
   const [scope, setScope] = useState<ScopeFilter>('ALL');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -153,6 +165,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     if (typeof savedPrefs.archivedOnly === 'boolean') {
       setArchivedOnly(savedPrefs.archivedOnly);
     }
+    if (typeof savedPrefs.showGroups === 'boolean') {
+      setShowGroups(savedPrefs.showGroups);
+    }
     if (savedPrefs.selectedChannelId !== undefined) {
       setSelectedChannelId(savedPrefs.selectedChannelId ?? null);
     }
@@ -172,6 +187,12 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           updatePrefs({ archivedOnly: next });
           return next;
         });
+      } else if (value === 'groups') {
+        setShowGroups((v) => {
+          const next = !v;
+          updatePrefs({ showGroups: next });
+          return next;
+        });
       }
     },
     [updatePrefs],
@@ -180,7 +201,8 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   const clearListFilters = useCallback(() => {
     setUnreadOnly(false);
     setArchivedOnly(false);
-    updatePrefs({ unreadOnly: false, archivedOnly: false });
+    setShowGroups(false);
+    updatePrefs({ unreadOnly: false, archivedOnly: false, showGroups: false });
   }, [updatePrefs]);
 
   const handleScopeChange = useCallback(
@@ -199,7 +221,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     [updatePrefs],
   );
 
-  const filterKey = `${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}`;
+  const filterKey = `${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${showGroups ? 'g' : ''}`;
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -227,7 +249,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   // Reset scroll when filters/search change
   useEffect(() => {
     scrollContainerRef.current?.scrollTo({ top: 0 });
-  }, [filterKey, debouncedSearch, selectedChannelId, scope]);
+  }, [filterKey, debouncedSearch, selectedChannelId, scope, showGroups]);
 
   const {
     data,
@@ -244,6 +266,10 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       // Otherwise: archivedOnly toggle = 'only', no toggle = 'exclude' (default).
       if (!viewId) {
         params.archived = archivedOnly ? 'only' : 'exclude';
+        // Grupos são escondidos por default no inbox geral (regra do JP).
+        // showGroups=true → backend devolve todas (não filtra). View
+        // ativa controla isso via filtros próprios da view.
+        if (!showGroups) params.groups = 'exclude';
       }
       if (debouncedSearch) params.search = debouncedSearch;
       // Channel filter is owned by the view when one is active — don't
@@ -750,7 +776,11 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
               </p>
               {filterOptions.map((f) => {
                 const isActive =
-                  f.value === 'unread' ? unreadOnly : archivedOnly;
+                  f.value === 'unread'
+                    ? unreadOnly
+                    : f.value === 'archived'
+                      ? archivedOnly
+                      : showGroups;
                 const Icon = f.icon;
                 return (
                   <button
