@@ -42,6 +42,7 @@ import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { useInboxPreferences } from '../hooks/use-inbox-preferences';
 import { ConversationContextMenu } from './conversation-context-menu';
+import { BulkAiPopover } from './bulk-ai-popover';
 
 function ListAvatar({ name, avatarUrl }: { name: string | null; avatarUrl: string | null }) {
   const [failed, setFailed] = useState(false);
@@ -481,6 +482,49 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     [selectedIds, clearSelection, invalidateConversations],
   );
 
+  const handleBulkSetAi = useCallback(
+    async (override: boolean | null) => {
+      const ids = Array.from(selectedIds);
+      if (ids.length === 0) return;
+      setBulkLoading(true);
+      try {
+        await inboxService.bulkSetAi(ids, override);
+        const label =
+          override === null
+            ? 'IA voltou ao padrão'
+            : override
+              ? 'IA forçada'
+              : 'IA pausada';
+        toast.success(`${label} em ${ids.length} conversa${ids.length > 1 ? 's' : ''}`);
+        clearSelection();
+        invalidateConversations();
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || 'Erro ao alterar IA em massa');
+      } finally {
+        setBulkLoading(false);
+      }
+    },
+    [selectedIds, clearSelection, invalidateConversations],
+  );
+
+  const handleBulkEngageAi = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setBulkLoading(true);
+    try {
+      await inboxService.bulkEngageAi(ids);
+      toast.success(
+        `IA engajada em ${ids.length} conversa${ids.length > 1 ? 's' : ''}`,
+      );
+      clearSelection();
+      invalidateConversations();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao engajar IA');
+    } finally {
+      setBulkLoading(false);
+    }
+  }, [selectedIds, clearSelection, invalidateConversations]);
+
   // Bulk: pin the selected conversations into a brand-new inbox view.
   // Asks for the inbox name with a quick prompt (no full dialog overhead),
   // creates the view with conversationIds=selected, then navigates to it.
@@ -826,6 +870,12 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           >
             <FolderPlus className="h-3.5 w-3.5" />
           </button>
+          <BulkAiPopover
+            count={selectedIds.size}
+            disabled={bulkLoading}
+            onSetOverride={handleBulkSetAi}
+            onEngage={handleBulkEngageAi}
+          />
           <button
             onClick={() => handleBulkAction('assign')}
             disabled={bulkLoading}

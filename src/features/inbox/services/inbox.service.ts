@@ -247,6 +247,18 @@ export const inboxService = {
     await Promise.allSettled(ids.map((id) => api.post(`/conversations/${id}/reopen`)));
   },
 
+  async bulkSetAi(ids: string[], enabled: boolean | null): Promise<void> {
+    await Promise.allSettled(
+      ids.map((id) => api.patch(`/conversations/${id}/ai`, { enabled })),
+    );
+  },
+
+  async bulkEngageAi(ids: string[]): Promise<void> {
+    await Promise.allSettled(
+      ids.map((id) => api.post(`/conversations/${id}/ai/engage`)),
+    );
+  },
+
   async archive(conversationId: string): Promise<Conversation> {
     const { data } = await api.post(`/conversations/${conversationId}/archive`);
     return data.data;
