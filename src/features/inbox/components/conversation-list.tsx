@@ -31,7 +31,10 @@ import {
   PopoverPanel,
 } from '@headlessui/react';
 import { inboxService, type Conversation } from '../services/inbox.service';
-import { inboxViewsService } from '@/features/inbox-views/services/inbox-views.service';
+import {
+  inboxViewsService,
+  type InboxView,
+} from '@/features/inbox-views/services/inbox-views.service';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -327,11 +330,25 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       // tabs/devices logged into the same account.
       if ((conv.unreadCount ?? 0) > 0) {
         const lastMsgId = conv.messages?.[0]?.id;
-        queryClient.setQueryData<any>(
-          ['conversations', orgId, viewId ?? null],
-          () => undefined,
-        );
-        // Optimistic update across all paginated pages.
+
+        // When the current list filters by "unread only" — either via the
+        // local toggle on the main inbox or via a saved view that pins
+        // unreadOnly — the conversation we just opened is no longer a
+        // member of the filtered set. Optimistically drop it from the
+        // cached pages so the user sees it leave immediately, instead of
+        // waiting for the next refetch.
+        let dropFromList = false;
+        if (viewId) {
+          const cachedViews = queryClient.getQueryData<InboxView[]>([
+            'inbox-views',
+          ]);
+          dropFromList =
+            cachedViews?.find((v) => v.id === viewId)?.filters?.unreadOnly ===
+            true;
+        } else {
+          dropFromList = unreadOnly;
+        }
+
         queryClient.setQueriesData<any>(
           { queryKey: ['conversations'] },
           (old: any) => {
@@ -340,9 +357,23 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
               ...old,
               pages: old.pages.map((p: any) => ({
                 ...p,
-                conversations: p.conversations.map((c: Conversation) =>
-                  c.id === conv.id ? { ...c, unreadCount: 0 } : c,
-                ),
+                conversations: dropFromList
+                  ? p.conversations.filter(
+                      (c: Conversation) => c.id !== conv.id,
+                    )
+                  : p.conversations.map((c: Conversation) =>
+                      c.id === conv.id ? { ...c, unreadCount: 0 } : c,
+                    ),
+                // Keep `total` honest when dropping — the unread badge in
+                // the sidebar reads from it and would otherwise be stale.
+                ...(dropFromList && p.pagination
+                  ? {
+                      pagination: {
+                        ...p.pagination,
+                        total: Math.max(0, (p.pagination.total ?? 1) - 1),
+                      },
+                    }
+                  : {}),
               })),
             };
           },
@@ -362,6 +393,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       queryClient,
       orgId,
       viewId,
+      unreadOnly,
     ],
   );
 
