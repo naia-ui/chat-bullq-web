@@ -2,6 +2,8 @@ import { api } from '@/lib/api';
 
 export type ChannelType = 'WHATSAPP_OFFICIAL' | 'WHATSAPP_ZAPPFY' | 'INSTAGRAM';
 
+export type ChannelVisibility = 'ORG' | 'PRIVATE';
+
 export interface Channel {
   id: string;
   organizationId: string;
@@ -12,6 +14,11 @@ export interface Channel {
   isActive: boolean;
   /** null = segue org.aiEnabled, true = força ON, false = força OFF nesse canal. */
   aiEnabled: boolean | null;
+  /**
+   * ORG     = qualquer membro da org com permissão padrão enxerga (default).
+   * PRIVATE = só membros com grant explícito enxergam, mesmo OWNER/ADMIN.
+   */
+  visibility: ChannelVisibility;
   createdAt: string;
   updatedAt: string;
 }
@@ -29,6 +36,7 @@ export interface UpdateChannelPayload {
   webhookSecret?: string;
   isActive?: boolean;
   aiEnabled?: boolean | null;
+  visibility?: ChannelVisibility;
 }
 
 export interface TestConnectionResult {

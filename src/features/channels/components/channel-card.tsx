@@ -14,6 +14,8 @@ import {
   AlertCircle,
   CheckCircle2,
   XCircle,
+  Lock,
+  Globe,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Channel } from '../services/channels.service';
@@ -64,6 +66,30 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
       onUpdate();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao atualizar canal');
+    }
+  };
+
+  const handleToggleVisibility = async () => {
+    const goingPrivate = channel.visibility !== 'PRIVATE';
+    if (goingPrivate) {
+      const ok = window.confirm(
+        'Tornar este canal privado?\n\n' +
+          'Apenas você e quem você der permissão explícita verão esse canal — ' +
+          'OWNERs e ADMINs da org NÃO terão acesso automático.\n\n' +
+          'Você pode liberar acesso pra outros membros depois pelas configurações de membros.',
+      );
+      if (!ok) return;
+    }
+    try {
+      await channelsService.update(channel.id, {
+        visibility: goingPrivate ? 'PRIVATE' : 'ORG',
+      });
+      toast.success(goingPrivate ? 'Canal agora é privado' : 'Canal agora é público na org');
+      onUpdate();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : 'Erro ao alterar visibilidade',
+      );
     }
   };
 
@@ -130,6 +156,15 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
           >
             {channel.isActive ? 'Ativo' : 'Inativo'}
           </span>
+          {channel.visibility === 'PRIVATE' && (
+            <span
+              title="Canal privado — só membros com permissão explícita enxergam, mesmo OWNER/ADMIN"
+              className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+            >
+              <Lock className="h-3 w-3" />
+              Privado
+            </span>
+          )}
         </div>
         <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{meta.label}</p>
 
@@ -240,6 +275,22 @@ export function ChannelCard({ channel, onUpdate }: ChannelCardProps) {
               >
                 <Pencil className="h-4 w-4" />
                 Editar credenciais
+              </button>
+              <button
+                onClick={() => { handleToggleVisibility(); setShowMenu(false); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              >
+                {channel.visibility === 'PRIVATE' ? (
+                  <>
+                    <Globe className="h-4 w-4" />
+                    Tornar público na org
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-4 w-4" />
+                    Tornar privado
+                  </>
+                )}
               </button>
               <button
                 onClick={() => { handleDelete(); setShowMenu(false); }}
