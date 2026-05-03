@@ -46,6 +46,7 @@ export interface Conversation {
   assignedToId: string | null;
   status: string;
   protocol: string | null;
+  subject?: string | null;
   isGroup: boolean;
   isArchived?: boolean;
   archivedAt?: string | null;
@@ -257,6 +258,18 @@ export const inboxService = {
     await Promise.allSettled(
       ids.map((id) => api.post(`/conversations/${id}/ai/engage`)),
     );
+  },
+
+  async updateConversation(
+    conversationId: string,
+    patch: { subject?: string | null },
+  ): Promise<Conversation> {
+    const { data } = await api.patch(`/conversations/${conversationId}`, patch);
+    return data.data ?? data;
+  },
+
+  async renameContact(contactId: string, name: string): Promise<void> {
+    await api.patch(`/contacts/${contactId}`, { name });
   },
 
   async archive(conversationId: string): Promise<Conversation> {

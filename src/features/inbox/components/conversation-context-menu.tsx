@@ -15,6 +15,7 @@ import {
   ArchiveRestore,
   Inbox as InboxIcon,
   Filter,
+  Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { tagsService, type Tag } from '@/features/settings/services/tags.service';
@@ -23,6 +24,7 @@ import { pipelinesService } from '@/features/pipelines/services/pipelines.servic
 import { inboxViewsService, type InboxView } from '@/features/inbox-views/services/inbox-views.service';
 import { inboxService } from '../services/inbox.service';
 import type { Conversation } from '../services/inbox.service';
+import { RenameConversationDialog } from './rename-conversation-dialog';
 
 type Target = 'conversation' | 'contact';
 
@@ -48,6 +50,7 @@ export function ConversationContextMenu({
   const [pendingPipelineId, setPendingPipelineId] = useState<string | null>(null);
   const [pendingViewId, setPendingViewId] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const isArchived = (conversation as any).isArchived === true;
 
   const { data: tags = [], isLoading } = useQuery({
@@ -283,6 +286,13 @@ export function ConversationContextMenu({
           <div className="mx-2 my-1 border-t border-zinc-100 dark:border-zinc-800" />
 
           <button
+            onClick={() => setRenameOpen(true)}
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+          >
+            <Pencil className="h-3.5 w-3.5 shrink-0 text-zinc-500 dark:text-zinc-400" />
+            <span className="flex-1">Renomear</span>
+          </button>
+          <button
             onClick={toggleArchive}
             disabled={archiving}
             className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
@@ -465,6 +475,15 @@ export function ConversationContextMenu({
           </div>
         </>
       )}
+
+      <RenameConversationDialog
+        conversation={conversation}
+        open={renameOpen}
+        onClose={() => {
+          setRenameOpen(false);
+          onClose();
+        }}
+      />
     </div>
   );
 }
