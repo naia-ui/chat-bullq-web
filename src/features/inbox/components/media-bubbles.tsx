@@ -31,7 +31,9 @@ interface MediaProps {
 }
 
 export function MediaImage({ message, isOutbound }: MediaProps) {
-  const { url, loading, error, retry } = useResolvedMedia(message);
+  // Eager: imagem aparece assim que a mensagem renderiza, sem precisar de
+  // clique pra disparar o resolve.
+  const { url, loading, error, retry } = useResolvedMedia(message, { mode: 'eager' });
   const [zoomOpen, setZoomOpen] = useState(false);
   const caption = message.content?.caption as string | undefined;
 
@@ -78,7 +80,7 @@ export function MediaImage({ message, isOutbound }: MediaProps) {
 }
 
 export function MediaVideo({ message, isOutbound }: MediaProps) {
-  const { url, mimeType, loading, error, retry } = useResolvedMedia(message);
+  const { url, mimeType, loading, error, retry } = useResolvedMedia(message, { mode: 'eager' });
   const caption = message.content?.caption as string | undefined;
 
   return (
@@ -171,7 +173,7 @@ export function MediaDocument({ message, isOutbound }: MediaProps) {
 }
 
 export function MediaSticker({ message, isOutbound }: MediaProps) {
-  const { url, loading, error, retry } = useResolvedMedia(message);
+  const { url, loading, error, retry } = useResolvedMedia(message, { mode: 'eager' });
 
   if (url) {
     return (
