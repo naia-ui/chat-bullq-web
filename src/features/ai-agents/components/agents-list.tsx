@@ -42,7 +42,19 @@ function layoutOrganogram(agents: AiAgent[]): {
   edges: Edge[];
 } {
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: 'TB', nodesep: 60, ranksep: 90 });
+  g.setGraph({
+    rankdir: 'TB',
+    // Espaço entre nós irmãos (horizontal). Aumentar evita as edges
+    // passarem por cima umas das outras quando 1 pai tem N filhos.
+    nodesep: 100,
+    // Espaço vertical entre níveis. Mais alto = mais "respiro" pras
+    // linhas saírem retas antes de virar lateral.
+    ranksep: 120,
+    // Direciona o algoritmo a posicionar cada nó no centro do seu
+    // pai (organograma "cartório") em vez de empilhar à esquerda.
+    marginx: 20,
+    marginy: 20,
+  });
   g.setDefaultEdgeLabel(() => ({}));
 
   const ids = new Set(agents.map((a) => a.id));
@@ -86,7 +98,10 @@ function layoutOrganogram(agents: AiAgent[]): {
         id: `${a.parentAgentId}->${a.id}`,
         source: a.parentAgentId,
         target: a.id,
-        type: 'smoothstep',
+        // step (sem curvas) dá um L "engineering" tradicional pra
+        // organograma; smoothstep com curvas faz N edges saindo do
+        // mesmo handle se cruzarem visualmente perto do source.
+        type: 'step',
         animated: false,
         style: { stroke: '#a1a1aa', strokeWidth: 1.5 },
       });
