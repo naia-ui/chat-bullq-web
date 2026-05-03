@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  UserPlus,
   XCircle,
   RotateCcw,
   RefreshCw,
@@ -15,6 +14,7 @@ import {
   Send,
 } from 'lucide-react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
+import { AssignmentPopover } from './assignment-popover';
 import { inboxService, type Conversation } from '../services/inbox.service';
 
 interface ConversationHeaderProps {
@@ -185,20 +185,11 @@ export function ConversationHeader({ conversation, onUpdate }: ConversationHeade
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
         </button>
-        {conversation.status !== 'CLOSED' && !conversation.assignedToId && (
-          <button
-            onClick={() =>
-              handleAction(
-                () => inboxService.assignToMe(conversation.id),
-                'Conversa atribuída a você',
-              )
-            }
-            disabled={isLoading}
-            className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Atribuir a mim
-          </button>
+        {conversation.status !== 'CLOSED' && (
+          <AssignmentPopover
+            conversation={conversation}
+            onChanged={onUpdate}
+          />
         )}
         {conversation.status !== 'CLOSED' && (
           <button

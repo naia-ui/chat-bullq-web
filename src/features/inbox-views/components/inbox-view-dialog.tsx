@@ -54,6 +54,12 @@ const ASSIGNED_OPTIONS = [
   { value: 'none', label: 'Não atribuída' },
 ];
 
+const KIND_OPTIONS: Array<{ value: '' | 'INDIVIDUAL' | 'GROUP'; label: string }> = [
+  { value: '', label: 'Todas' },
+  { value: 'INDIVIDUAL', label: 'Apenas individuais' },
+  { value: 'GROUP', label: 'Apenas grupos' },
+];
+
 export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('Filter');
@@ -61,6 +67,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
   const [channelIds, setChannelIds] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [assignedTo, setAssignedTo] = useState<string>('any');
+  const [kind, setKind] = useState<'' | 'INDIVIDUAL' | 'GROUP'>('');
   const [saving, setSaving] = useState(false);
 
   const { data: channels = [] } = useQuery({
@@ -77,6 +84,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
       setChannelIds(view.filters?.channelIds ?? []);
       setStatuses(view.filters?.statuses ?? []);
       setAssignedTo(view.filters?.assignedTo ?? 'any');
+      setKind(view.filters?.kind ?? '');
     } else {
       setName('');
       setIcon('Filter');
@@ -84,6 +92,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
       setChannelIds([]);
       setStatuses([]);
       setAssignedTo('any');
+      setKind('');
     }
   }, [view, open]);
 
@@ -107,6 +116,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
     if (channelIds.length) filters.channelIds = channelIds;
     if (statuses.length) filters.statuses = statuses;
     if (assignedTo && assignedTo !== 'any') filters.assignedTo = assignedTo;
+    if (kind) filters.kind = kind;
 
     setSaving(true);
     try {
@@ -270,6 +280,28 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              Tipo de conversa
+            </label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {KIND_OPTIONS.map((o) => (
+                <button
+                  key={o.value || 'all'}
+                  type="button"
+                  onClick={() => setKind(o.value)}
+                  className={`rounded-full px-3 py-1 text-xs ${
+                    kind === o.value
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

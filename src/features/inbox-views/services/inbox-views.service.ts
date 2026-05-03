@@ -7,6 +7,8 @@ export interface InboxViewFilters {
   assignedTo?: 'me' | 'none' | 'any' | string;
   tagIds?: string[];
   lastDirection?: 'inbound' | 'outbound' | 'any';
+  /** INDIVIDUAL = 1-on-1, GROUP = group chats. Undefined = ambos. */
+  kind?: 'INDIVIDUAL' | 'GROUP';
   /** Static list of conversations pinned to this view (set via bulk
    *  "create inbox from selection"). Other filters still apply on top. */
   conversationIds?: string[];

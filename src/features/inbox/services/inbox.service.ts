@@ -157,6 +157,20 @@ export const inboxService = {
     return data.data;
   },
 
+  /**
+   * Atribui (ou desatribui com null) a conversa pra um user da org.
+   * Usa o endpoint genérico de update que aceita assignedToId.
+   */
+  async assignTo(
+    conversationId: string,
+    assignedToId: string | null,
+  ): Promise<Conversation> {
+    const { data } = await api.patch(`/conversations/${conversationId}`, {
+      assignedToId,
+    });
+    return data.data;
+  },
+
   async closeConversation(conversationId: string): Promise<Conversation> {
     const { data } = await api.post(`/conversations/${conversationId}/close`);
     return data.data;
