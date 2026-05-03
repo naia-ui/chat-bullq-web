@@ -1,13 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   aiAgentsService,
   CURATED_MODELS,
+  DEPARTMENTS,
   type AgentKind,
 } from '../services/ai-agents.service';
+import { useOrgId } from '@/hooks/use-org-query-key';
 
 interface CreateAgentDialogProps {
   open: boolean;
@@ -27,6 +30,7 @@ export function CreateAgentDialog({
   onClose,
   onCreated,
 }: CreateAgentDialogProps) {
+  const orgId = useOrgId();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [kind, setKind] = useState<AgentKind>('WORKER');
@@ -34,7 +38,27 @@ export function CreateAgentDialog({
   const [modelId, setModelId] = useState('anthropic/claude-sonnet-4-6');
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PROMPT);
   const [temperature, setTemperature] = useState(0.7);
+  const [parentAgentId, setParentAgentId] = useState<string>('');
+  const [department, setDepartment] = useState<string>('');
+  const [squad, setSquad] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // Load existing agents for the "reports to" dropdown.
+  // Only enabled while dialog is open to avoid unnecessary fetches.
+  const { data: agents } = useQuery({
+    queryKey: ['ai-agents', orgId],
+    queryFn: () => aiAgentsService.list(),
+    enabled: open,
+  });
+
+  useEffect(() => {
+    // When user picks ORCHESTRATOR, default parent to none and department
+    // to leave the org root unconstrained — orchestrators usually report
+    // straight to the human owner, not another agent.
+    if (kind === 'ORCHESTRATOR' && parentAgentId) {
+      setParentAgentId('');
+    }
+  }, [kind, parentAgentId]);
 
   if (!open) return null;
 
@@ -53,6 +77,9 @@ export function CreateAgentDialog({
         modelId,
         systemPrompt: systemPrompt.trim(),
         temperature,
+        parentAgentId: parentAgentId || null,
+        department: department || null,
+        squad: squad.trim() || null,
       });
       toast.success('Agente criado!');
       reset();
@@ -75,7 +102,14 @@ export function CreateAgentDialog({
     setModelId('anthropic/claude-sonnet-4-6');
     setSystemPrompt(DEFAULT_PROMPT);
     setTemperature(0.7);
+    setParentAgentId('');
+    setDepartment('');
+    setSquad('');
   };
+
+  // Eligible parents: any agent in the org (the list endpoint already
+  // filters soft-deleted ones). Workers can report to workers (multi-level).
+  const eligibleParents = agents ?? [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -146,6 +180,68 @@ export function CreateAgentDialog({
                 placeholder="vendas / suporte / billing"
                 className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
               />
+            </div>
+          </div>
+
+          {/* Organograma matricial ágil */}
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Organograma
+            </p>
+            <p className="mt-0.5 text-[11px] text-zinc-500">
+              Define hierarquia (chefia direta), departamento e squad ágil.
+            </p>
+
+            <div className="mt-3 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  Reporta a (chefe direto)
+                </label>
+                <select
+                  value={parentAgentId}
+                  onChange={(e) => setParentAgentId(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                >
+                  <option value="">— Raiz / sem chefe (CEO virtual) —</option>
+                  {eligibleParents.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name} {a.kind === 'ORCHESTRATOR' ? '(Orquestrador)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                    Departamento
+                  </label>
+                  <select
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  >
+                    <option value="">— Não definido —</option>
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                    Squad ágil
+                  </label>
+                  <input
+                    type="text"
+                    value={squad}
+                    onChange={(e) => setSquad(e.target.value)}
+                    placeholder="Ex: Inbound B2C"
+                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

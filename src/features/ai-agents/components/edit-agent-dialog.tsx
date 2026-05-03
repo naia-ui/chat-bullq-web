@@ -7,11 +7,13 @@ import { toast } from 'sonner';
 import {
   aiAgentsService,
   CURATED_MODELS,
+  DEPARTMENTS,
   type AiAgent,
   type AgentMode,
 } from '../services/ai-agents.service';
 import { aiCatalogService } from '../services/ai-catalog.service';
 import { channelsService } from '@/features/channels/services/channels.service';
+import { useOrgId } from '@/hooks/use-org-query-key';
 
 interface EditAgentDialogProps {
   agent: AiAgent | null;
@@ -24,11 +26,15 @@ export function EditAgentDialog({
   onClose,
   onSaved,
 }: EditAgentDialogProps) {
+  const orgId = useOrgId();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [modelId, setModelId] = useState('anthropic/claude-sonnet-4-6');
   const [systemPrompt, setSystemPrompt] = useState('');
   const [temperature, setTemperature] = useState(0.7);
+  const [parentAgentId, setParentAgentId] = useState<string>('');
+  const [department, setDepartment] = useState<string>('');
+  const [squad, setSquad] = useState('');
   const [saving, setSaving] = useState(false);
   const [showAddChannel, setShowAddChannel] = useState(false);
   const [newChannelId, setNewChannelId] = useState('');
@@ -40,6 +46,13 @@ export function EditAgentDialog({
     enabled: !!agent,
   });
 
+  // Other agents in the org for the "reports to" dropdown.
+  const { data: allAgents } = useQuery({
+    queryKey: ['ai-agents', orgId],
+    queryFn: () => aiAgentsService.list(),
+    enabled: !!agent,
+  });
+
   useEffect(() => {
     if (!agent) return;
     setName(agent.name);
@@ -47,6 +60,9 @@ export function EditAgentDialog({
     setModelId(agent.modelId);
     setSystemPrompt(agent.systemPrompt);
     setTemperature(agent.temperature);
+    setParentAgentId(agent.parentAgentId ?? '');
+    setDepartment(agent.department ?? '');
+    setSquad(agent.squad ?? '');
   }, [agent]);
 
   if (!agent) return null;
@@ -60,6 +76,9 @@ export function EditAgentDialog({
         modelId,
         systemPrompt,
         temperature,
+        parentAgentId: parentAgentId || null,
+        department: department || null,
+        squad: squad.trim() || null,
       });
       toast.success('Agente atualizado');
       onSaved();
@@ -198,6 +217,71 @@ export function EditAgentDialog({
               onChange={(e) => setTemperature(parseFloat(e.target.value))}
               className="mt-2 w-full"
             />
+          </div>
+
+          {/* Organograma matricial ágil */}
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Organograma
+            </p>
+            <p className="mt-0.5 text-[11px] text-zinc-500">
+              Define hierarquia (chefia direta), departamento e squad ágil.
+            </p>
+
+            <div className="mt-3 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                  Reporta a (chefe direto)
+                </label>
+                <select
+                  value={parentAgentId}
+                  onChange={(e) => setParentAgentId(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                >
+                  <option value="">— Raiz / sem chefe (CEO virtual) —</option>
+                  {(allAgents ?? [])
+                    .filter((a) => a.id !== agent.id)
+                    .map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.name}{' '}
+                        {a.kind === 'ORCHESTRATOR' ? '(Orquestrador)' : ''}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                    Departamento
+                  </label>
+                  <select
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  >
+                    <option value="">— Não definido —</option>
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                    Squad ágil
+                  </label>
+                  <input
+                    type="text"
+                    value={squad}
+                    onChange={(e) => setSquad(e.target.value)}
+                    placeholder="Ex: Inbound B2C"
+                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
           {agent && (

@@ -4,6 +4,40 @@ export type AgentKind = 'ORCHESTRATOR' | 'WORKER';
 export type AgentMode = 'AUTONOMOUS' | 'COPILOT' | 'DISABLED';
 export type AgentTrigger = 'ALWAYS' | 'OFF_HOURS' | 'NO_HUMAN_ASSIGNED';
 
+/**
+ * Departamentos pré-definidos para o organograma matricial. A coluna
+ * `department` no banco é uma string livre, mas a UI sugere esses valores
+ * pra padronizar o agrupamento por área. `OUTRO` permite extensão sem
+ * alterar a lista.
+ */
+export const DEPARTMENTS = [
+  'VENDAS',
+  'SUPORTE',
+  'CS',
+  'CONTABIL',
+  'JURIDICO',
+  'FINANCEIRO',
+  'OPERACOES',
+  'TECNOLOGIA',
+  'MARKETING',
+  'OUTRO',
+] as const;
+export type Department = (typeof DEPARTMENTS)[number];
+
+/** Cor sutil por departamento — usada no card e nas swimlanes do organograma. */
+export const DEPARTMENT_COLORS: Record<string, { bg: string; text: string; ring: string }> = {
+  VENDAS:      { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', ring: 'ring-emerald-200 dark:ring-emerald-800' },
+  SUPORTE:     { bg: 'bg-blue-50 dark:bg-blue-900/20',       text: 'text-blue-700 dark:text-blue-400',       ring: 'ring-blue-200 dark:ring-blue-800' },
+  CS:          { bg: 'bg-violet-50 dark:bg-violet-900/20',   text: 'text-violet-700 dark:text-violet-400',   ring: 'ring-violet-200 dark:ring-violet-800' },
+  CONTABIL:    { bg: 'bg-amber-50 dark:bg-amber-900/20',     text: 'text-amber-700 dark:text-amber-400',     ring: 'ring-amber-200 dark:ring-amber-800' },
+  JURIDICO:    { bg: 'bg-rose-50 dark:bg-rose-900/20',       text: 'text-rose-700 dark:text-rose-400',       ring: 'ring-rose-200 dark:ring-rose-800' },
+  FINANCEIRO:  { bg: 'bg-teal-50 dark:bg-teal-900/20',       text: 'text-teal-700 dark:text-teal-400',       ring: 'ring-teal-200 dark:ring-teal-800' },
+  OPERACOES:   { bg: 'bg-cyan-50 dark:bg-cyan-900/20',       text: 'text-cyan-700 dark:text-cyan-400',       ring: 'ring-cyan-200 dark:ring-cyan-800' },
+  TECNOLOGIA:  { bg: 'bg-indigo-50 dark:bg-indigo-900/20',   text: 'text-indigo-700 dark:text-indigo-400',   ring: 'ring-indigo-200 dark:ring-indigo-800' },
+  MARKETING:   { bg: 'bg-pink-50 dark:bg-pink-900/20',       text: 'text-pink-700 dark:text-pink-400',       ring: 'ring-pink-200 dark:ring-pink-800' },
+  OUTRO:       { bg: 'bg-zinc-100 dark:bg-zinc-800/50',      text: 'text-zinc-600 dark:text-zinc-400',       ring: 'ring-zinc-200 dark:ring-zinc-700' },
+};
+
 export interface AgentChannelLink {
   id: string;
   channelId: string;
@@ -28,6 +62,9 @@ export interface AiAgent {
   maxTokens: number;
   canRespondDirectly: boolean;
   isActive: boolean;
+  parentAgentId: string | null;
+  department: string | null;
+  squad: string | null;
   createdAt: string;
   updatedAt: string;
   channels?: AgentChannelLink[];
@@ -45,6 +82,9 @@ export interface CreateAgentInput {
   maxTokens?: number;
   canRespondDirectly?: boolean;
   isActive?: boolean;
+  parentAgentId?: string | null;
+  department?: string | null;
+  squad?: string | null;
 }
 
 export interface AgentRun {
