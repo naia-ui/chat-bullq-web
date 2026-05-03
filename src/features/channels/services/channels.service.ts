@@ -10,6 +10,8 @@ export interface Channel {
   config: Record<string, any>;
   webhookSecret: string | null;
   isActive: boolean;
+  /** null = segue org.aiEnabled, true = força ON, false = força OFF nesse canal. */
+  aiEnabled: boolean | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,6 +28,7 @@ export interface UpdateChannelPayload {
   config?: Record<string, any>;
   webhookSecret?: string;
   isActive?: boolean;
+  aiEnabled?: boolean | null;
 }
 
 export interface TestConnectionResult {

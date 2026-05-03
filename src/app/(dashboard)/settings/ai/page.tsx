@@ -11,6 +11,7 @@ import {
   type BusinessHoursConfig,
   type Weekday,
 } from '@/features/ai-agents/services/ai-settings.service';
+import { channelsService, type Channel } from '@/features/channels/services/channels.service';
 
 const TIMEZONES = [
   'America/Sao_Paulo',
@@ -143,13 +144,17 @@ export default function SettingsAiPage() {
               IA habilitada (geral)
             </p>
             <p className="mt-0.5 text-xs text-zinc-500">
-              Padrão pra novas conversas. Conversas individuais podem
-              forçar IA ON ou OFF e sobrepor essa config.
+              Padrão pra novas conversas. Canais individuais podem sobrepor
+              esse toggle (abaixo). Conversas individuais também podem forçar
+              IA ON/OFF.
             </p>
           </div>
           <Toggle checked={aiEnabled} onChange={setAiEnabled} />
         </label>
       </section>
+
+      {/* Override por canal */}
+      <ChannelAiOverrides />
 
       {/* Auto-disable on human */}
       <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
@@ -322,5 +327,127 @@ function Toggle({
         }`}
       />
     </button>
+  );
+}
+
+/**
+ * Lista todos os canais ativos com um tri-state selector pra IA por canal:
+ *   "Padrão" (null) → segue o toggle global da org
+ *   "Forçar ON" (true) → IA responde nesse canal mesmo se org tá OFF
+ *   "Forçar OFF" (false) → IA não responde nesse canal mesmo com org ON
+ *
+ * Cada mudança chama PATCH /channels/:id imediatamente — não precisa salvar.
+ */
+function ChannelAiOverrides() {
+  const qc = useQueryClient();
+  const { data: channels, isLoading } = useQuery({
+    queryKey: ['channels'],
+    queryFn: () => channelsService.list(),
+  });
+
+  const update = async (id: string, value: boolean | null) => {
+    try {
+      await channelsService.update(id, { aiEnabled: value });
+      qc.invalidateQueries({ queryKey: ['channels'] });
+      toast.success(
+        value === null
+          ? 'Canal seguindo padrão da org'
+          : value
+            ? 'IA forçada ON nesse canal'
+            : 'IA desligada nesse canal',
+      );
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao salvar');
+    }
+  };
+
+  const visible = (channels ?? []).filter((c) => !!c.isActive);
+
+  return (
+    <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="mb-3">
+        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          IA por canal
+        </p>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          Sobrepõe o toggle geral acima por canal. Útil pra ligar IA só num
+          número de teste, ou desligar num canal de produção temporariamente.
+        </p>
+      </div>
+
+      {isLoading ? (
+        <div className="h-12 animate-pulse rounded-md bg-zinc-100 dark:bg-zinc-800" />
+      ) : visible.length === 0 ? (
+        <p className="text-xs text-zinc-500">
+          Nenhum canal ativo. Adicione canais na aba Canais.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {visible.map((c) => (
+            <ChannelOverrideRow
+              key={c.id}
+              channel={c}
+              onChange={(v) => update(c.id, v)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ChannelOverrideRow({
+  channel,
+  onChange,
+}: {
+  channel: Channel;
+  onChange: (v: boolean | null) => void;
+}) {
+  const opts: Array<{ value: 'inherit' | 'on' | 'off'; label: string; bg: string }> = [
+    { value: 'inherit', label: 'Padrão', bg: 'bg-zinc-200 dark:bg-zinc-700' },
+    { value: 'on', label: 'ON', bg: 'bg-emerald-500' },
+    { value: 'off', label: 'OFF', bg: 'bg-red-500' },
+  ];
+  const current: 'inherit' | 'on' | 'off' =
+    channel.aiEnabled === null || channel.aiEnabled === undefined
+      ? 'inherit'
+      : channel.aiEnabled
+        ? 'on'
+        : 'off';
+
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          {channel.name}
+        </p>
+        <p className="truncate text-[11px] text-zinc-500">
+          {channel.type.replace('_', ' ').toLowerCase()}
+        </p>
+      </div>
+      <div className="inline-flex rounded-md bg-zinc-200 p-0.5 dark:bg-zinc-800">
+        {opts.map((opt) => {
+          const active = current === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() =>
+                onChange(
+                  opt.value === 'inherit' ? null : opt.value === 'on',
+                )
+              }
+              className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
+                active
+                  ? `${opt.bg} text-white`
+                  : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-700'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
