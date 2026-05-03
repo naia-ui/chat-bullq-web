@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Users,
   LayoutDashboard,
   Settings,
   LogOut,
@@ -37,7 +36,6 @@ import {
 } from '@/components/ui/dropdown';
 
 const navItems = [
-  { href: '/contacts', label: 'Contatos', icon: Users },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
 
