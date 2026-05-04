@@ -7,6 +7,7 @@ import {
   ChevronsUpDown,
   Building2,
   ChevronUp,
+  Zap,
 } from 'lucide-react';
 import { InboxTree } from '@/features/inbox-views/components/inbox-tree';
 import { JarvisTree } from '@/features/ai-agents/components/jarvis-tree';
@@ -35,6 +36,7 @@ import {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/automations', label: 'Automações', icon: Zap },
 ];
 
 export function AppSidebar() {
