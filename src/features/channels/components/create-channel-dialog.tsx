@@ -76,6 +76,9 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
   const [selectedType, setSelectedType] = useState<ChannelType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Default ORG = qualquer membro com permissão padrão enxerga.
+  // PRIVATE = apenas quem tiver grant explícito (pra canais sensíveis).
+  const [visibility, setVisibility] = useState<'ORG' | 'PRIVATE'>('ORG');
 
   const zappfyForm = useForm<ZappfyFormData>({
     resolver: zodResolver(zappfySchema),
@@ -108,7 +111,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
   const submitChannel = async (type: ChannelType, name: string, config: Record<string, any>, webhookSecret?: string) => {
     setIsLoading(true);
     try {
-      await channelsService.create({ type, name, config, webhookSecret });
+      await channelsService.create({ type, name, config, webhookSecret, visibility });
       toast.success('Canal criado com sucesso!');
       handleClose();
       onCreated();

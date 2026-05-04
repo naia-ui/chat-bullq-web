@@ -28,6 +28,7 @@ export interface CreateChannelPayload {
   name: string;
   config: Record<string, any>;
   webhookSecret?: string;
+  visibility?: ChannelVisibility;
 }
 
 export interface UpdateChannelPayload {
