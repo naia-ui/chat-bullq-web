@@ -137,6 +137,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   const [showGroups, setShowGroups] = useState(false);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [tagSearch, setTagSearch] = useState('');
   // showGroups conta como filtro ativo SÓ quando ON (default OFF é o
   // comportamento padrão, não merece badge). Tags contam 1 por tag.
   const activeFilterCount =
@@ -277,6 +278,12 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     queryKey: ['tags', orgId],
     queryFn: () => tagsService.list(),
   });
+
+  const filteredTags = useMemo(() => {
+    const q = tagSearch.trim().toLowerCase();
+    if (!q) return tags;
+    return tags.filter((t) => t.name.toLowerCase().includes(q));
+  }, [tags, tagSearch]);
 
   // Drop selected tag ids that no longer exist (tag deleted in another tab).
   // Avoid sending stale ids to the backend — they'd just match nothing.
@@ -824,7 +831,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
             transition
             className="z-50 mt-1.5 w-64 rounded-lg border border-zinc-200/80 bg-white p-1 shadow-lg outline-none transition duration-100 ease-out data-[closed]:scale-95 data-[closed]:opacity-0 dark:border-zinc-800 dark:bg-zinc-900 [--anchor-gap:0.25rem]"
           >
-            <div className="max-h-[28rem] overflow-y-auto scrollbar-thin">
+            <div>
               <p className="px-2.5 py-1.5 text-[11px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                 Filtros
               </p>
@@ -882,35 +889,72 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                       </button>
                     )}
                   </div>
-                  {tags.map((tag) => {
-                    const isActive = selectedTagIds.includes(tag.id);
-                    return (
-                      <button
-                        key={tag.id}
-                        onClick={() => toggleTagFilter(tag.id)}
-                        className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] transition-colors ${
-                          isActive
-                            ? 'bg-primary/[0.06] font-medium text-primary dark:bg-primary/10'
-                            : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60'
-                        }`}
-                      >
-                        <div
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
-                            isActive
-                              ? 'border-primary bg-primary text-white'
-                              : 'border-zinc-300 dark:border-zinc-600'
-                          }`}
+                  <div className="px-1.5 pb-1">
+                    <div className="relative">
+                      <Search className="pointer-events-none absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-zinc-400" />
+                      <input
+                        type="text"
+                        placeholder="Buscar tag..."
+                        value={tagSearch}
+                        onChange={(e) => setTagSearch(e.target.value)}
+                        // Headless UI fecha o popover quando o foco vaza ou
+                        // quando ESC sobe — paramos a propagação pra ESC
+                        // limpar o campo sem fechar tudo.
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape' && tagSearch) {
+                            e.stopPropagation();
+                            setTagSearch('');
+                          }
+                        }}
+                        className="w-full rounded-md border-0 bg-zinc-100/80 py-1 pl-7 pr-7 text-[12px] text-zinc-900 outline-none ring-1 ring-transparent transition-all placeholder:text-zinc-400 focus:bg-white focus:ring-primary/30 dark:bg-zinc-800/60 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:bg-zinc-900"
+                      />
+                      {tagSearch && (
+                        <button
+                          onClick={() => setTagSearch('')}
+                          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-zinc-400 transition-colors hover:text-zinc-600 dark:hover:text-zinc-300"
                         >
-                          {isActive && <Check className="h-2.5 w-2.5" />}
-                        </div>
-                        <span
-                          className="h-2 w-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: tag.color }}
-                        />
-                        <span className="flex-1 truncate">{tag.name}</span>
-                      </button>
-                    );
-                  })}
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="max-h-56 overflow-y-auto scrollbar-thin">
+                    {filteredTags.length === 0 ? (
+                      <p className="px-2.5 py-2 text-center text-[11px] text-zinc-400 dark:text-zinc-500">
+                        Nenhuma tag encontrada
+                      </p>
+                    ) : (
+                      filteredTags.map((tag) => {
+                        const isActive = selectedTagIds.includes(tag.id);
+                        return (
+                          <button
+                            key={tag.id}
+                            onClick={() => toggleTagFilter(tag.id)}
+                            className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] transition-colors ${
+                              isActive
+                                ? 'bg-primary/[0.06] font-medium text-primary dark:bg-primary/10'
+                                : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60'
+                            }`}
+                          >
+                            <div
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                                isActive
+                                  ? 'border-primary bg-primary text-white'
+                                  : 'border-zinc-300 dark:border-zinc-600'
+                              }`}
+                            >
+                              {isActive && <Check className="h-2.5 w-2.5" />}
+                            </div>
+                            <span
+                              className="h-2 w-2 shrink-0 rounded-full"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            <span className="flex-1 truncate">{tag.name}</span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
                 </>
               )}
               {activeFilterCount > 0 && (
