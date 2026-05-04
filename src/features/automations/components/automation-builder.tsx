@@ -9,7 +9,6 @@ import {
   Automation,
   AutomationMeta,
   AutomationTrigger,
-  ConditionGroup,
   ConditionOperator,
   ConditionRoot,
   ConditionRule,
@@ -24,6 +23,10 @@ import {
   TRIGGER_LABELS,
   operatorsForField,
 } from '../utils/labels';
+import {
+  AutomationLookups,
+  useAutomationLookups,
+} from '../hooks/use-lookups';
 
 interface BuilderProps {
   meta: AutomationMeta;
@@ -32,15 +35,33 @@ interface BuilderProps {
   onSaved: () => void;
 }
 
-// One big drawer. Could be split into per-step components but the form
-// state is tightly coupled (trigger change resets conditions, etc.) and
-// splitting would add prop-drilling without making it clearer.
+// Conversation status enum mirrors the backend ConversationStatus.
+const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'PENDING', label: 'Pendente' },
+  { value: 'BOT', label: 'No bot' },
+  { value: 'OPEN', label: 'Aberta' },
+  { value: 'WAITING', label: 'Aguardando' },
+  { value: 'CLOSED', label: 'Fechada' },
+];
+
+const MESSAGE_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'TEXT', label: 'Texto' },
+  { value: 'IMAGE', label: 'Imagem' },
+  { value: 'AUDIO', label: 'Áudio' },
+  { value: 'VIDEO', label: 'Vídeo' },
+  { value: 'DOCUMENT', label: 'Documento' },
+  { value: 'STICKER', label: 'Figurinha' },
+  { value: 'LOCATION', label: 'Localização' },
+];
+
 export function AutomationBuilder({
   meta,
   initial,
   onClose,
   onSaved,
 }: BuilderProps) {
+  const lookups = useAutomationLookups();
+
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [trigger, setTrigger] = useState<AutomationTrigger>(
@@ -62,9 +83,6 @@ export function AutomationBuilder({
   );
   const [saving, setSaving] = useState(false);
 
-  // Trigger change wipes conditions — fields differ per trigger and a
-  // stale rule pointing to a field the new trigger doesn't have would
-  // fail save anyway. Better to reset visibly than to confuse the user.
   const triggerFields = useMemo(
     () => meta.triggers.find((t) => t.value === trigger)?.fields ?? [],
     [meta, trigger],
@@ -75,8 +93,6 @@ export function AutomationBuilder({
     if (trigger !== initial.trigger) {
       setConditions({ match: 'OR', groups: [] });
     }
-    // Don't reset on first render of an initial automation — only when
-    // user actually changed the trigger after opening.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trigger]);
 
@@ -105,7 +121,9 @@ export function AutomationBuilder({
       if (i !== gi) return g;
       return {
         ...g,
-        rules: g.rules.map((r, j) => (j === ri ? { ...r, ...patch } : r)),
+        rules: g.rules.map((r, j) =>
+          j === ri ? ({ ...r, ...patch } as ConditionRule) : r,
+        ),
       };
     });
     setConditions({ ...conditions, groups });
@@ -166,6 +184,15 @@ export function AutomationBuilder({
       toast.error('Pelo menos uma ação é obrigatória');
       return;
     }
+    // Block save if any action is missing required refs. The backend
+    // would 400 anyway, but better UX to catch here with a friendly msg.
+    const missing = actions.findIndex((a) => !isActionConfigured(a));
+    if (missing >= 0) {
+      toast.error(
+        `Configure os campos da ação ${missing + 1} (${ACTION_LABELS[actions[missing].type]})`,
+      );
+      return;
+    }
     const payload: CreateAutomationPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
@@ -186,9 +213,7 @@ export function AutomationBuilder({
       }
       onSaved();
     } catch (err) {
-      toast.error(
-        (err as Error)?.message ?? 'Erro ao salvar automação',
-      );
+      toast.error((err as Error)?.message ?? 'Erro ao salvar automação');
     } finally {
       setSaving(false);
     }
@@ -320,7 +345,7 @@ export function AutomationBuilder({
                     >
                       <option value="AND">TODAS</option>
                       <option value="OR">QUALQUER</option>
-                    </select>{' '}
+                    </select>
                     )
                   </span>
                   <button
@@ -335,6 +360,7 @@ export function AutomationBuilder({
                     key={ri}
                     rule={rule}
                     fields={triggerFields}
+                    lookups={lookups}
                     onChange={(patch) => updateRule(gi, ri, patch)}
                     onRemove={() => removeRule(gi, ri)}
                   />
@@ -363,6 +389,7 @@ export function AutomationBuilder({
                 key={i}
                 index={i}
                 action={action}
+                lookups={lookups}
                 onChange={(patch) => updateAction(i, patch)}
                 onParamChange={(key, value) =>
                   updateActionParam(i, key, value)
@@ -459,25 +486,160 @@ function Label({ children }: { children: React.ReactNode }) {
   );
 }
 
+const inputCls =
+  'w-full rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950';
+
+// Renders the value side of a condition rule based on which field is
+// selected. Maps every ID-bearing field to a real-data dropdown so a
+// non-technical user never has to know an ID exists.
+function ConditionValueInput({
+  field,
+  value,
+  onChange,
+  lookups,
+}: {
+  field: string;
+  value: ConditionRule['value'];
+  onChange: (v: ConditionRule['value']) => void;
+  lookups: AutomationLookups;
+}) {
+  switch (field) {
+    case 'tagId':
+      return (
+        <select
+          className={inputCls}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">Selecione uma tag…</option>
+          {lookups.tags.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      );
+    case 'channelId':
+      return (
+        <select
+          className={inputCls}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">Selecione um canal…</option>
+          {lookups.channels.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      );
+    case 'fromAssigneeId':
+    case 'toAssigneeId':
+      return (
+        <select
+          className={inputCls}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">Selecione um agente…</option>
+          {lookups.members.map((m) => (
+            <option key={m.userId} value={m.userId}>
+              {m.user?.name ?? m.user?.email ?? m.userId}
+            </option>
+          ))}
+        </select>
+      );
+    case 'fromStatus':
+    case 'toStatus':
+      return (
+        <select
+          className={inputCls}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">Selecione um status…</option>
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+      );
+    case 'target':
+      return (
+        <select
+          className={inputCls}
+          value={(value as string) ?? 'conversation'}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="conversation">Conversa</option>
+          <option value="contact">Contato</option>
+        </select>
+      );
+    case 'type':
+      return (
+        <select
+          className={inputCls}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+        >
+          <option value="">Selecione um tipo…</option>
+          {MESSAGE_TYPE_OPTIONS.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+      );
+    case 'hasAttachment':
+      return (
+        <select
+          className={inputCls}
+          value={String(value ?? false)}
+          onChange={(e) => onChange(e.target.value === 'true')}
+        >
+          <option value="true">Sim</option>
+          <option value="false">Não</option>
+        </select>
+      );
+    default:
+      return (
+        <input
+          className={inputCls}
+          value={(value as string | number | undefined)?.toString() ?? ''}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="valor"
+        />
+      );
+  }
+}
+
 function RuleRow({
   rule,
   fields,
+  lookups,
   onChange,
   onRemove,
 }: {
   rule: ConditionRule;
   fields: string[];
+  lookups: AutomationLookups;
   onChange: (patch: Partial<ConditionRule>) => void;
   onRemove: () => void;
 }) {
   const ops = operatorsForField(rule.field);
-  const needsValue =
-    rule.op !== 'is_set' && rule.op !== 'is_not_set';
+  const needsValue = rule.op !== 'is_set' && rule.op !== 'is_not_set';
   return (
     <div className="flex items-center gap-2">
       <select
         value={rule.field}
-        onChange={(e) => onChange({ field: e.target.value })}
+        onChange={(e) =>
+          // Field change: clear the value because the previous one was
+          // probably for a different lookup type (e.g. a tag id is
+          // meaningless if user just switched to channelId).
+          onChange({ field: e.target.value, value: '' })
+        }
         className="rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
       >
         {fields.map((f) => (
@@ -498,12 +660,14 @@ function RuleRow({
         ))}
       </select>
       {needsValue && (
-        <input
-          value={(rule.value as string | number | undefined)?.toString() ?? ''}
-          onChange={(e) => onChange({ value: e.target.value })}
-          placeholder="valor"
-          className="flex-1 rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        />
+        <div className="flex-1">
+          <ConditionValueInput
+            field={rule.field}
+            value={rule.value}
+            onChange={(v) => onChange({ value: v })}
+            lookups={lookups}
+          />
+        </div>
       )}
       <button
         onClick={onRemove}
@@ -519,12 +683,14 @@ function RuleRow({
 function ActionRow({
   index,
   action,
+  lookups,
   onChange,
   onParamChange,
   onRemove,
 }: {
   index: number;
   action: ActionDefinition;
+  lookups: AutomationLookups;
   onChange: (patch: Partial<ActionDefinition>) => void;
   onParamChange: (key: string, value: unknown) => void;
   onRemove: () => void;
@@ -544,6 +710,7 @@ function ActionRow({
       </div>
       <ActionParams
         action={action}
+        lookups={lookups}
         onParamChange={onParamChange}
       />
       <label className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
@@ -559,29 +726,32 @@ function ActionRow({
   );
 }
 
-// Per-action input rendering. Kept inline rather than split into one
-// component per action — each one is 1-3 inputs, splitting would 5x
-// the file count for marginal benefit.
 function ActionParams({
   action,
+  lookups,
   onParamChange,
 }: {
   action: ActionDefinition;
+  lookups: AutomationLookups;
   onParamChange: (key: string, value: unknown) => void;
 }) {
-  const inputCls =
-    'w-full rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950';
   switch (action.type) {
     case 'add_tag':
     case 'remove_tag':
       return (
         <div className="space-y-2">
-          <input
-            placeholder="ID da tag"
+          <select
             className={inputCls}
             value={(action.params.tagId as string) ?? ''}
             onChange={(e) => onParamChange('tagId', e.target.value)}
-          />
+          >
+            <option value="">Selecione uma tag…</option>
+            {lookups.tags.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
           <select
             className={inputCls}
             value={(action.params.target as string) ?? 'conversation'}
@@ -592,32 +762,99 @@ function ActionParams({
           </select>
         </div>
       );
-    case 'add_to_pipeline':
+    case 'add_to_pipeline': {
+      const pipelineId = (action.params.pipelineId as string) ?? '';
+      const stages = lookups.stagesOf(pipelineId);
       return (
-        <input
-          placeholder="ID do pipeline"
-          className={inputCls}
-          value={(action.params.pipelineId as string) ?? ''}
-          onChange={(e) => onParamChange('pipelineId', e.target.value)}
-        />
+        <div className="space-y-2">
+          <select
+            className={inputCls}
+            value={pipelineId}
+            onChange={(e) => {
+              // When pipeline changes, clear stage — old stageId might
+              // belong to a different pipeline now.
+              onParamChange('pipelineId', e.target.value);
+              onParamChange('stageId', '');
+            }}
+          >
+            <option value="">Selecione um pipeline…</option>
+            {lookups.pipelines.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          {pipelineId && stages.length > 0 && (
+            <select
+              className={inputCls}
+              value={(action.params.stageId as string) ?? ''}
+              onChange={(e) => onParamChange('stageId', e.target.value)}
+            >
+              <option value="">Primeiro estágio (padrão)</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                  {s.type !== 'NORMAL' ? ` (${s.type})` : ''}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       );
-    case 'move_pipeline_stage':
+    }
+    case 'move_pipeline_stage': {
+      const pipelineId = (action.params.pipelineId as string) ?? '';
+      const stages = lookups.stagesOf(pipelineId);
       return (
-        <input
-          placeholder="ID do estágio destino"
-          className={inputCls}
-          value={(action.params.toStageId as string) ?? ''}
-          onChange={(e) => onParamChange('toStageId', e.target.value)}
-        />
+        <div className="space-y-2">
+          <select
+            className={inputCls}
+            value={pipelineId}
+            onChange={(e) => {
+              onParamChange('pipelineId', e.target.value);
+              onParamChange('toStageId', '');
+            }}
+          >
+            <option value="">Selecione um pipeline…</option>
+            {lookups.pipelines.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          {pipelineId && (
+            <select
+              className={inputCls}
+              value={(action.params.toStageId as string) ?? ''}
+              onChange={(e) => onParamChange('toStageId', e.target.value)}
+            >
+              <option value="">Selecione o estágio destino…</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                  {s.type !== 'NORMAL' ? ` (${s.type})` : ''}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       );
+    }
     case 'assign_user':
       return (
-        <input
-          placeholder="ID do usuário"
+        <select
           className={inputCls}
           value={(action.params.userId as string) ?? ''}
           onChange={(e) => onParamChange('userId', e.target.value)}
-        />
+        >
+          <option value="">Selecione um agente…</option>
+          {lookups.members.map((m) => (
+            <option key={m.userId} value={m.userId}>
+              {m.user?.name ?? m.user?.email ?? m.userId}
+              {m.role !== 'AGENT' ? ` · ${m.role.toLowerCase()}` : ''}
+            </option>
+          ))}
+        </select>
       );
     case 'send_message':
       return (
@@ -639,12 +876,34 @@ function defaultActionParams(type: ActionType): Record<string, unknown> {
     case 'remove_tag':
       return { tagId: '', target: 'conversation' };
     case 'add_to_pipeline':
-      return { pipelineId: '' };
+      return { pipelineId: '', stageId: '' };
     case 'move_pipeline_stage':
-      return { toStageId: '' };
+      return { pipelineId: '', toStageId: '' };
     case 'assign_user':
       return { userId: '' };
     case 'send_message':
       return { body: '' };
+  }
+}
+
+// Pre-flight check: every action must have its required refs filled in.
+// Mirrors the backend's per-handler validateParams. Run before save so
+// the user gets a friendly toast instead of an HTTP 400.
+function isActionConfigured(action: ActionDefinition): boolean {
+  switch (action.type) {
+    case 'add_tag':
+    case 'remove_tag':
+      return !!action.params.tagId;
+    case 'add_to_pipeline':
+      return !!action.params.pipelineId;
+    case 'move_pipeline_stage':
+      return !!action.params.pipelineId && !!action.params.toStageId;
+    case 'assign_user':
+      return !!action.params.userId;
+    case 'send_message':
+      return (
+        typeof action.params.body === 'string' &&
+        (action.params.body as string).trim().length > 0
+      );
   }
 }
