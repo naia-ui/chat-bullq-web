@@ -16,6 +16,7 @@ import {
   Inbox as InboxIcon,
   Filter,
   Pencil,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { tagsService, type Tag } from '@/features/settings/services/tags.service';
@@ -134,25 +135,29 @@ export function ConversationContextMenu({
     queryClient.invalidateQueries({ queryKey: ['conversation', conversation.id] });
   };
 
-  const addToInboxView = async (target: InboxView) => {
-    if (pinnedViewIds.has(target.id)) {
-      toast.info(`Já está em "${target.name}"`);
-      return;
-    }
+  const toggleInboxView = async (target: InboxView) => {
+    const isPinned = pinnedViewIds.has(target.id);
     setPendingViewId(target.id);
     try {
       const currentIds = target.filters?.conversationIds ?? [];
-      const nextIds = Array.from(new Set([...currentIds, conversation.id]));
+      const nextIds = isPinned
+        ? currentIds.filter((id) => id !== conversation.id)
+        : Array.from(new Set([...currentIds, conversation.id]));
       await inboxViewsService.update(target.id, {
         filters: { ...target.filters, conversationIds: nextIds },
       });
-      toast.success(`Adicionada a "${target.name}"`);
+      toast.success(
+        isPinned
+          ? `Removida de "${target.name}"`
+          : `Adicionada a "${target.name}"`,
+      );
       queryClient.invalidateQueries({ queryKey: ['inbox-views'] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
       onClose();
     } catch (err: any) {
       toast.error(
-        err?.response?.data?.message || 'Erro ao adicionar à inbox',
+        err?.response?.data?.message ||
+          (isPinned ? 'Erro ao remover da inbox' : 'Erro ao adicionar à inbox'),
       );
     } finally {
       setPendingViewId(null);
@@ -344,12 +349,12 @@ export function ConversationContextMenu({
                 return (
                   <button
                     key={v.id}
-                    onClick={() => addToInboxView(v)}
-                    disabled={isPending || isPinned}
-                    className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+                    onClick={() => toggleInboxView(v)}
+                    disabled={isPending}
+                    className="group flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
                     title={
                       isPinned
-                        ? `Já está em "${v.name}"`
+                        ? `Remover de "${v.name}"`
                         : `Adicionar a "${v.name}"`
                     }
                   >
@@ -358,7 +363,10 @@ export function ConversationContextMenu({
                     {isPending ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />
                     ) : isPinned ? (
-                      <Check className="h-3.5 w-3.5 text-primary" />
+                      <>
+                        <Check className="h-3.5 w-3.5 text-primary group-hover:hidden" />
+                        <X className="hidden h-3.5 w-3.5 text-red-500 group-hover:block" />
+                      </>
                     ) : null}
                   </button>
                 );
