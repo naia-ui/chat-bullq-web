@@ -16,6 +16,7 @@ import {
 import { ConversationAiToggle } from './conversation-ai-toggle';
 import { AssignmentPopover } from './assignment-popover';
 import { AgentPinPopover } from './agent-pin-popover';
+import { PipelinePopover } from './pipeline-popover';
 import { inboxService, type Conversation } from '../services/inbox.service';
 
 interface ConversationHeaderProps {
@@ -193,6 +194,7 @@ export function ConversationHeader({ conversation, onUpdate }: ConversationHeade
             onChanged={onUpdate}
           />
         )}
+        <PipelinePopover conversation={conversation} onChanged={onUpdate} />
         {conversation.status !== 'CLOSED' && (
           <button
             onClick={() =>

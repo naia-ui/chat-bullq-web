@@ -102,9 +102,40 @@ export interface CreateCardInput {
   assignedToId?: string;
 }
 
+export interface ConversationCard {
+  id: string;
+  pipelineId: string;
+  stageId: string;
+  status: CardStatus;
+  pipeline: {
+    id: string;
+    name: string;
+    color: string | null;
+    icon: string | null;
+    archived: boolean;
+  };
+  stage: {
+    id: string;
+    name: string;
+    color: string | null;
+    type: StageType;
+    order: number;
+  };
+}
+
 export const pipelinesService = {
   async list(): Promise<Pipeline[]> {
     const { data } = await api.get('/pipelines');
+    return data.data ?? data;
+  },
+  /**
+   * Cards (across pipelines) que apontam pra essa conversa. Usado pelo
+   * popover de pipelines no header da conversa.
+   */
+  async listByConversation(conversationId: string): Promise<ConversationCard[]> {
+    const { data } = await api.get(
+      `/pipelines/cards/by-conversation/${conversationId}`,
+    );
     return data.data ?? data;
   },
   async create(input: CreatePipelineInput): Promise<Pipeline> {
