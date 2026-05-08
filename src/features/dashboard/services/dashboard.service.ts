@@ -3,6 +3,8 @@ import { api } from '@/lib/api';
 export interface DashboardOverview {
   activeConversations: number;
   activeBreakdown: { pending: number; open: number; waiting: number; bot: number };
+  /** Conversas marcadas como presas pelo watchdog (após exceder maxAttempts). */
+  stuckConversations: number;
 
   avgFirstResponseMinutes: number | null;
   avgFirstResponseTrend: number;

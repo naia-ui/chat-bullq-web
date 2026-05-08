@@ -213,6 +213,17 @@ export default function DashboardPage() {
               footer={
                 <span>
                   {overview.activeBreakdown.pending} fila · {overview.activeBreakdown.open} aberta · {overview.activeBreakdown.waiting} aguardando
+                  {overview.stuckConversations > 0 ? (
+                    <>
+                      {' · '}
+                      <a
+                        href="/inbox?stuck=true"
+                        className="font-medium text-amber-600 hover:underline dark:text-amber-400"
+                      >
+                        {overview.stuckConversations} presa{overview.stuckConversations === 1 ? '' : 's'}
+                      </a>
+                    </>
+                  ) : null}
                 </span>
               }
             />

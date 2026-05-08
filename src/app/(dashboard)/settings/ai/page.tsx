@@ -416,6 +416,236 @@ Reembolso:
           className="mt-3 w-48 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
         />
       </section>
+
+      {/* Watchdog header */}
+      <div className="mt-10 mb-2 flex items-center gap-2">
+        <ShieldAlert className="h-5 w-5 text-amber-500" />
+        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          Watchdog de conversas presas
+        </h3>
+      </div>
+      <p className="mb-4 text-xs text-zinc-500">
+        Detecta conversas onde a IA travou ou o humano abandonou e reativa o
+        atendimento automaticamente. Roda em camadas: agenda um timer toda vez
+        que o cliente manda mensagem e tem um cron de fallback que varre
+        conversas presas a cada 15 minutos.
+      </p>
+
+      {/* Watchdog kill switch */}
+      <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <label className="flex cursor-pointer items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              Watchdog habilitado
+            </p>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              Quando OFF, conversas presas ficam paradas até um humano
+              intervir. Recomendado deixar ON.
+            </p>
+          </div>
+          <Toggle checked={watchdogEnabled} onChange={setWatchdogEnabled} />
+        </label>
+      </section>
+
+      {/* Watchdog params */}
+      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          Parâmetros
+        </p>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          Controle quanto o watchdog espera antes de reagir e quantas vezes
+          tenta antes de marcar a conversa como presa.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <NumberField
+            label="IA travou (status BOT)"
+            hint="Minutos sem resposta com IA atendendo."
+            suffix="min"
+            value={watchdogConfig.delayBotMin}
+            onChange={(v) =>
+              setWatchdogConfig((c) => ({ ...c, delayBotMin: v }))
+            }
+            disabled={!watchdogEnabled}
+          />
+          <NumberField
+            label="Ninguém pegou (PENDING)"
+            hint="Minutos sem ninguém assumir a conversa."
+            suffix="min"
+            value={watchdogConfig.delayPendingMin}
+            onChange={(v) =>
+              setWatchdogConfig((c) => ({ ...c, delayPendingMin: v }))
+            }
+            disabled={!watchdogEnabled}
+          />
+          <NumberField
+            label="Humano abandonou (OPEN)"
+            hint="Minutos sem o atendente humano responder."
+            suffix="min"
+            value={watchdogConfig.delayHumanIdleMin}
+            onChange={(v) =>
+              setWatchdogConfig((c) => ({ ...c, delayHumanIdleMin: v }))
+            }
+            disabled={!watchdogEnabled}
+          />
+          <NumberField
+            label="Tentativas máximas"
+            hint="Após esse número, marca como presa e notifica gestor."
+            suffix=""
+            value={watchdogConfig.maxAttempts}
+            onChange={(v) =>
+              setWatchdogConfig((c) => ({ ...c, maxAttempts: v }))
+            }
+            disabled={!watchdogEnabled}
+            min={1}
+            max={10}
+          />
+        </div>
+      </section>
+
+      {/* Watchdog business hours */}
+      <section className="mt-4 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+              Horário de atuação do watchdog
+            </p>
+            <p className="mt-0.5 text-xs text-zinc-500">
+              {watchdogAlwaysOn
+                ? 'Watchdog roda 24/7. Reativa conversas a qualquer hora.'
+                : 'Fora desse horário o watchdog não reativa conversas.'}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <label className="flex cursor-pointer items-center gap-2">
+              <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                24/7
+              </span>
+              <Toggle
+                checked={watchdogAlwaysOn}
+                onChange={setWatchdogAlwaysOn}
+              />
+            </label>
+          </div>
+        </div>
+
+        {watchdogAlwaysOn ? null : (
+          <div className="mt-4 space-y-3">
+            {WEEKDAYS.map(({ key, label }) => {
+              const day = watchdogHours[key] ?? { enabled: false, windows: [] };
+              return (
+                <div
+                  key={key}
+                  className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50/40 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900/40"
+                >
+                  <label className="flex w-24 cursor-pointer items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={day.enabled}
+                      onChange={(e) =>
+                        updateWatchdogDay(key, { enabled: e.target.checked })
+                      }
+                      className="h-3.5 w-3.5 rounded border-zinc-300"
+                    />
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                      {label}
+                    </span>
+                  </label>
+
+                  {day.enabled ? (
+                    <div className="flex flex-1 flex-wrap items-center gap-2">
+                      {(day.windows ?? []).map(([from, to], i) => (
+                        <div key={i} className="flex items-center gap-1">
+                          <input
+                            type="time"
+                            value={from}
+                            onChange={(e) => {
+                              const updated = [...(day.windows ?? [])];
+                              updated[i] = [e.target.value, to];
+                              updateWatchdogDay(key, { windows: updated });
+                            }}
+                            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                          />
+                          <span className="text-xs text-zinc-400">até</span>
+                          <input
+                            type="time"
+                            value={to}
+                            onChange={(e) => {
+                              const updated = [...(day.windows ?? [])];
+                              updated[i] = [from, e.target.value];
+                              updateWatchdogDay(key, { windows: updated });
+                            }}
+                            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                          />
+                          <button
+                            onClick={() => removeWatchdogWindow(key, i)}
+                            className="rounded p-1 text-zinc-400 hover:bg-red-50 hover:text-red-500"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => addWatchdogWindow(key)}
+                        className="inline-flex items-center gap-1 rounded-md border border-dashed border-zinc-300 px-2 py-1 text-[11px] text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                      >
+                        <Plus className="h-3 w-3" /> Janela
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-zinc-400">Não atua</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function NumberField({
+  label,
+  hint,
+  suffix,
+  value,
+  onChange,
+  disabled,
+  min = 1,
+  max = 1440,
+}: {
+  label: string;
+  hint: string;
+  suffix: string;
+  value: number;
+  onChange: (v: number) => void;
+  disabled?: boolean;
+  min?: number;
+  max?: number;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+        {label}
+      </label>
+      <div className="mt-1 flex items-center gap-1">
+        <input
+          type="number"
+          min={min}
+          max={max}
+          value={value}
+          disabled={disabled}
+          onChange={(e) => {
+            const v = parseInt(e.target.value, 10);
+            if (!Number.isNaN(v) && v >= min && v <= max) onChange(v);
+          }}
+          className="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+        />
+        {suffix ? (
+          <span className="text-xs text-zinc-500">{suffix}</span>
+        ) : null}
+      </div>
+      <p className="mt-1 text-[11px] text-zinc-500">{hint}</p>
     </div>
   );
 }
