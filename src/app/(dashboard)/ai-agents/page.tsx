@@ -1,15 +1,16 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Bot, BarChart3, User, Sparkles, Wrench, Activity } from 'lucide-react';
+import { Bot, BarChart3, User, Sparkles, Wrench, Activity, ShieldCheck } from 'lucide-react';
 import { AgentsList } from '@/features/ai-agents/components/agents-list';
 import { JarvisOverviewTab } from '@/features/ai-agents/components/jarvis/overview-tab';
 import { JarvisAgentTab } from '@/features/ai-agents/components/jarvis/agent-tab';
 import { JarvisSkillsTab } from '@/features/ai-agents/components/jarvis/skills-tab';
 import { JarvisToolsTab } from '@/features/ai-agents/components/jarvis/tools-tab';
 import { JarvisRunsTab } from '@/features/ai-agents/components/jarvis/runs-tab';
+import { JarvisWatchdogTab } from '@/features/ai-agents/components/jarvis/watchdog-tab';
 
-type Tab = 'overview' | 'agents' | 'skills' | 'tools' | 'agent' | 'runs';
+type Tab = 'overview' | 'agents' | 'skills' | 'tools' | 'agent' | 'runs' | 'watchdog';
 
 const TAB_META: Record<Tab, { label: string; icon: React.ElementType }> = {
   overview: { label: 'Visão geral', icon: BarChart3 },
@@ -17,10 +18,11 @@ const TAB_META: Record<Tab, { label: string; icon: React.ElementType }> = {
   skills: { label: 'Skills', icon: Sparkles },
   tools: { label: 'Tools', icon: Wrench },
   runs: { label: 'Execuções', icon: Activity },
+  watchdog: { label: 'Watchdog', icon: ShieldCheck },
   agent: { label: 'Por agente', icon: User },
 };
 
-const VALID_TABS: Tab[] = ['overview', 'agents', 'skills', 'tools', 'runs', 'agent'];
+const VALID_TABS: Tab[] = ['overview', 'agents', 'skills', 'tools', 'runs', 'watchdog', 'agent'];
 
 export default function AiAgentsPage() {
   const searchParams = useSearchParams();
@@ -47,6 +49,7 @@ export default function AiAgentsPage() {
         {tab === 'skills' && <JarvisSkillsTab />}
         {tab === 'tools' && <JarvisToolsTab />}
         {tab === 'runs' && <JarvisRunsTab />}
+        {tab === 'watchdog' && <JarvisWatchdogTab />}
         {tab === 'agent' && <JarvisAgentTab />}
       </div>
     </div>

@@ -172,6 +172,11 @@ export const aiAgentsService = {
     return data.data ?? data;
   },
 
+  async watchdogStats(): Promise<WatchdogStats> {
+    const { data } = await api.get('/ai-agents/watchdog/stats');
+    return data.data ?? data;
+  },
+
   async setSkillApproval(
     agentId: string,
     skillId: string,
@@ -217,6 +222,37 @@ export const aiAgentsService = {
   },
 
 };
+
+export interface WatchdogConversationLite {
+  id: string;
+  status: string;
+  stuckAttempts: number;
+  lastWatchdogCheckAt: string | null;
+  watchdogJobId?: string | null;
+  updatedAt: string;
+  contact: { id: string; name: string | null; phone: string | null };
+  channel: { id: string; name: string; type: string };
+}
+
+export interface WatchdogStats {
+  enabled: boolean;
+  config: {
+    delayBotMin: number;
+    delayPendingMin: number;
+    delayHumanIdleMin: number;
+    maxAttempts: number;
+  };
+  businessHours: unknown;
+  timezone: string;
+  stats: {
+    activeTimers: number;
+    checks24h: number;
+    reactivations24h: number;
+    stuck: number;
+  };
+  topAlert: WatchdogConversationLite[];
+  recentStuck: WatchdogConversationLite[];
+}
 
 export interface AgentSkillBinding {
   skillId: string;
