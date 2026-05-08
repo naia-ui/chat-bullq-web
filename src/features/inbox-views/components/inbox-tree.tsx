@@ -20,6 +20,7 @@ import {
   Pencil,
   Trash2,
   Archive,
+  MailOpen,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -34,6 +35,7 @@ const VIEW_ICON: Record<string, any> = {
   Phone,
   Instagram,
   Mail,
+  MailOpen,
   Send,
   Users,
   Tag,
