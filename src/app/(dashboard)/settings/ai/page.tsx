@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Sparkles, Plus, Trash2 } from 'lucide-react';
+import { Sparkles, Plus, Trash2, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   aiSettingsService,
   DEFAULT_BUSINESS_HOURS,
+  DEFAULT_WATCHDOG_CONFIG,
   WEEKDAYS,
   type BusinessHoursConfig,
+  type WatchdogConfig,
   type Weekday,
 } from '@/features/ai-agents/services/ai-settings.service';
 import { channelsService, type Channel } from '@/features/channels/services/channels.service';
@@ -41,6 +43,15 @@ export default function SettingsAiPage() {
   const [tokenCap, setTokenCap] = useState<string>('');
   const [saving, setSaving] = useState(false);
 
+  // ─── Watchdog state ──────────────────────────────
+  const [watchdogEnabled, setWatchdogEnabled] = useState(true);
+  const [watchdogHours, setWatchdogHours] =
+    useState<BusinessHoursConfig>(DEFAULT_BUSINESS_HOURS);
+  const [watchdogAlwaysOn, setWatchdogAlwaysOn] = useState(true);
+  const [watchdogConfig, setWatchdogConfig] = useState<Required<WatchdogConfig>>(
+    DEFAULT_WATCHDOG_CONFIG,
+  );
+
   useEffect(() => {
     if (!data) return;
     setAiEnabled(data.aiEnabled);
@@ -51,6 +62,10 @@ export default function SettingsAiPage() {
     setBusinessNotes(data.aiBusinessNotes ?? '');
     setAutoDisable(data.aiAutoDisableOnHuman);
     setTokenCap(data.aiMonthlyTokenCap?.toString() ?? '');
+    setWatchdogEnabled(data.watchdogEnabled);
+    setWatchdogAlwaysOn(data.watchdogBusinessHours == null);
+    setWatchdogHours(data.watchdogBusinessHours ?? DEFAULT_BUSINESS_HOURS);
+    setWatchdogConfig({ ...DEFAULT_WATCHDOG_CONFIG, ...(data.watchdogConfig ?? {}) });
   }, [data]);
 
   const handleSave = async () => {
@@ -64,6 +79,9 @@ export default function SettingsAiPage() {
         aiBusinessNotes: businessNotes.trim() ? businessNotes : null,
         aiAutoDisableOnHuman: autoDisable,
         aiMonthlyTokenCap: tokenCap ? parseInt(tokenCap, 10) : null,
+        watchdogEnabled,
+        watchdogBusinessHours: watchdogAlwaysOn ? null : watchdogHours,
+        watchdogConfig: watchdogConfig,
       });
       toast.success('Configurações de IA salvas');
       qc.invalidateQueries({ queryKey: ['ai-settings'] });
@@ -72,6 +90,46 @@ export default function SettingsAiPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const updateWatchdogDay = (
+    day: Weekday,
+    patch: Partial<{ enabled: boolean; windows: Array<[string, string]> }>,
+  ) => {
+    setWatchdogHours((prev) => ({
+      ...prev,
+      [day]: {
+        enabled: prev[day]?.enabled ?? false,
+        windows: prev[day]?.windows ?? [],
+        ...patch,
+      },
+    }));
+  };
+
+  const addWatchdogWindow = (day: Weekday) => {
+    setWatchdogHours((prev) => {
+      const existing = prev[day]?.windows ?? [];
+      return {
+        ...prev,
+        [day]: {
+          enabled: prev[day]?.enabled ?? true,
+          windows: [...existing, ['09:00', '18:00']],
+        },
+      };
+    });
+  };
+
+  const removeWatchdogWindow = (day: Weekday, idx: number) => {
+    setWatchdogHours((prev) => {
+      const existing = prev[day]?.windows ?? [];
+      return {
+        ...prev,
+        [day]: {
+          enabled: prev[day]?.enabled ?? false,
+          windows: existing.filter((_, i) => i !== idx),
+        },
+      };
+    });
   };
 
   const updateDay = (

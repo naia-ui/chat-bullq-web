@@ -56,9 +56,11 @@ export function JarvisTree() {
     }
   };
 
-  const goRoot = () => router.push('/ai-agents');
-  const goTab = (tab: Tab) =>
-    router.push(tab === 'overview' ? '/ai-agents' : `/ai-agents?tab=${tab}`);
+  // Sempre passamos `?tab=` explícito (inclusive pra overview) — sem isso,
+  // navegar de `/ai-agents?tab=runs` pra `/ai-agents` (mesma rota base, só
+  // limpando o param) não dispara re-render confiável no Next.js App Router.
+  const goRoot = () => router.push('/ai-agents?tab=overview');
+  const goTab = (tab: Tab) => router.push(`/ai-agents?tab=${tab}`);
 
   return (
     <div className="space-y-0.5">

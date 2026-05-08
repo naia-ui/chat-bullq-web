@@ -15,6 +15,20 @@ export interface BusinessHoursDay {
 }
 export type BusinessHoursConfig = Partial<Record<Weekday, BusinessHoursDay>>;
 
+export interface WatchdogConfig {
+  delayBotMin?: number;
+  delayPendingMin?: number;
+  delayHumanIdleMin?: number;
+  maxAttempts?: number;
+}
+
+export const DEFAULT_WATCHDOG_CONFIG: Required<WatchdogConfig> = {
+  delayBotMin: 15,
+  delayPendingMin: 15,
+  delayHumanIdleMin: 60,
+  maxAttempts: 3,
+};
+
 export interface OrganizationAiSettings {
   id: string;
   name: string;
@@ -25,6 +39,9 @@ export interface OrganizationAiSettings {
   aiBusinessNotes: string | null;
   aiAutoDisableOnHuman: boolean;
   aiMonthlyTokenCap: number | null;
+  watchdogEnabled: boolean;
+  watchdogBusinessHours: BusinessHoursConfig | null;
+  watchdogConfig: WatchdogConfig | null;
 }
 
 export interface UpdateAiSettingsInput {
@@ -35,6 +52,9 @@ export interface UpdateAiSettingsInput {
   aiBusinessNotes?: string | null;
   aiAutoDisableOnHuman?: boolean;
   aiMonthlyTokenCap?: number | null;
+  watchdogEnabled?: boolean;
+  watchdogBusinessHours?: BusinessHoursConfig | null;
+  watchdogConfig?: WatchdogConfig | null;
 }
 
 export const aiSettingsService = {
