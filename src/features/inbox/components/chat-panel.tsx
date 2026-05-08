@@ -37,6 +37,85 @@ const statusIcons: Record<string, React.ElementType> = {
   FAILED: AlertCircle,
 };
 
+/**
+ * Banner de aviso quando a conversa está fora da "janela de atendimento"
+ * do WhatsApp (24h sem mensagem do cliente). Sem template aprovado, qualquer
+ * mensagem livre é rejeitada pelo provider com `failed_reason: Re-engagement
+ * message`.
+ *
+ * Heurística client-side: olha as últimas mensagens já carregadas e procura
+ * a última INBOUND. Se nenhuma encontrada nos buffer atual, OU se ela é mais
+ * velha que 24h, mostra o banner. Não 100% preciso (paginação pode esconder
+ * inbound antiga) mas resolve >95% dos casos sem precisar de campo novo no
+ * backend.
+ */
+function EngagementWindowBanner({
+  channelType,
+  messages,
+}: {
+  channelType: string;
+  messages: Message[];
+}) {
+  // Apenas WhatsApp tem regra de janela 24h. Instagram tem 7d (não cobrir
+  // aqui pra não confundir). Channels de teste/web ignoramos.
+  if (!channelType.startsWith('WHATSAPP')) return null;
+  if (messages.length === 0) return null;
+
+  const lastInbound = [...messages]
+    .reverse()
+    .find((m) => m.direction === 'INBOUND');
+  if (!lastInbound) return null;
+
+  const ageMs = Date.now() - new Date(lastInbound.createdAt).getTime();
+  const ageHours = ageMs / (60 * 60 * 1000);
+  if (ageHours < 24) return null;
+
+  const ageLabel =
+    ageHours < 48
+      ? `${Math.floor(ageHours)}h`
+      : `${Math.floor(ageHours / 24)} dias`;
+
+  return (
+    <div className="flex items-start gap-2 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
+      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+      <div className="flex-1 leading-relaxed">
+        <strong>Janela de 24h expirada</strong> — última mensagem do cliente
+        foi há {ageLabel}. WhatsApp só aceita{' '}
+        <strong>templates aprovados</strong> agora. Mensagem de texto livre
+        vai falhar com erro <code className="font-mono text-[11px]">Re-engagement message</code>.
+        Peça pro cliente mandar qualquer mensagem pra reabrir a janela, ou
+        envie um template HSM via Meta Business.
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Tooltip humano pra cada status. Especial pra FAILED com motivo conhecido
+ * — operador entende que precisa de template em vez de relê o erro do
+ * provider em inglês ("Re-engagement message").
+ */
+function statusTooltip(status: string, failedReason?: string | null): string {
+  switch (status) {
+    case 'QUEUED':
+      return 'Enviando…';
+    case 'SENT':
+      return 'Enviado pro provedor';
+    case 'DELIVERED':
+      return 'Entregue ao destinatário';
+    case 'READ':
+      return 'Lida';
+    case 'FAILED':
+      if (failedReason && /re-?engagement/i.test(failedReason)) {
+        return 'Falhou: cliente sem mensagem há mais de 24h. Use um template aprovado pra reabrir a conversa.';
+      }
+      if (failedReason) return `Falhou: ${failedReason}`;
+      return 'Falhou ao enviar';
+    default:
+      return status;
+  }
+}
+
 const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 const IG_CDN_HOSTS = /(lookaside\.fbsbx\.com|cdninstagram\.com|fbcdn\.net)/i;
 
@@ -533,6 +612,11 @@ export function ChatPanel({
 
       <PendingActionsList conversationId={conversation.id} />
 
+      <EngagementWindowBanner
+        channelType={conversation.channel.type}
+        messages={messages}
+      />
+
       <div className="min-h-0 flex-1 overflow-y-auto bg-zinc-50 p-4 dark:bg-zinc-900/50">
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
@@ -725,9 +809,17 @@ export function ChatPanel({
                           >
                             <span>{formatTime(msg.createdAt)}</span>
                             {isOutbound && (
-                              <StatusIcon
-                                className={`h-3 w-3 ${msg.status === 'READ' ? 'text-primary' : ''}`}
-                              />
+                              <span title={statusTooltip(msg.status, msg.failedReason)}>
+                                <StatusIcon
+                                  className={`h-3 w-3 ${
+                                    msg.status === 'FAILED'
+                                      ? 'text-red-500'
+                                      : msg.status === 'READ'
+                                        ? 'text-primary'
+                                        : ''
+                                  }`}
+                                />
+                              </span>
                             )}
                           </div>
                         </>
@@ -766,9 +858,17 @@ export function ChatPanel({
                           >
                             <span>{formatTime(msg.createdAt)}</span>
                             {isOutbound && (
-                              <StatusIcon
-                                className={`h-3 w-3 ${msg.status === 'READ' ? 'text-blue-300' : ''}`}
-                              />
+                              <span title={statusTooltip(msg.status, msg.failedReason)}>
+                                <StatusIcon
+                                  className={`h-3 w-3 ${
+                                    msg.status === 'FAILED'
+                                      ? 'text-red-300'
+                                      : msg.status === 'READ'
+                                        ? 'text-blue-300'
+                                        : ''
+                                  }`}
+                                />
+                              </span>
                             )}
                           </div>
                         </div>

@@ -116,6 +116,9 @@ export interface Message {
   content: Record<string, any>;
   externalId: string | null;
   status: string;
+  /** Motivo do erro quando status=FAILED. Vem direto do provider WhatsApp.
+   *  Ex.: "Re-engagement message" = janela 24h expirada → precisa template. */
+  failedReason?: string | null;
   senderName: string | null;
   senderId: string | null;
   sender: MessageSender | null;
