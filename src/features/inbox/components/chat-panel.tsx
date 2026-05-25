@@ -595,8 +595,26 @@ export function ChatPanel({
     }
   };
 
-  const formatTime = (date: string) =>
-    new Date(date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  // Hora embaixo de cada bolha. Se a msg não for de hoje, prefixa com
+  // a data curta ("DD/MM 16:58") pra não precisar caçar o separador
+  // rolando o histórico inteiro.
+  const formatTime = (date: string) => {
+    const d = new Date(date);
+    const now = new Date();
+    const isToday =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    if (isToday) return time;
+    const showYear = d.getFullYear() !== now.getFullYear();
+    const datePart = d.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      ...(showYear ? { year: '2-digit' } : {}),
+    });
+    return `${datePart} ${time}`;
+  };
 
   // Separador de data no estilo WhatsApp: agrupa mensagens por dia.
   // "Hoje" / "Ontem" / dia da semana (últimos 7 dias) / "25 de maio" /
