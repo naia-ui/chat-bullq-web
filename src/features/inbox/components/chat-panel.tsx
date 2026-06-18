@@ -27,6 +27,9 @@ interface ChatPanelProps {
    *  shows up in the chat header. */
   onToggleAgentLogs?: () => void;
   agentLogsOpen?: boolean;
+  /** Forwarded to ConversationHeader for the Project panel toggle (groups). */
+  onToggleProject?: () => void;
+  projectOpen?: boolean;
 }
 
 const statusIcons: Record<string, React.ElementType> = {
@@ -375,6 +378,8 @@ export function ChatPanel({
   onConversationUpdate,
   onToggleAgentLogs,
   agentLogsOpen,
+  onToggleProject,
+  projectOpen,
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -671,6 +676,8 @@ export function ChatPanel({
         onUpdate={onConversationUpdate}
         onToggleAgentLogs={onToggleAgentLogs}
         agentLogsOpen={agentLogsOpen}
+        onToggleProject={onToggleProject}
+        projectOpen={projectOpen}
       />
 
       <PendingActionsList conversationId={conversation.id} />

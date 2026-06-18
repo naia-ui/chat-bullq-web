@@ -20,6 +20,7 @@ import {
   Archive,
   Tag as TagIcon,
   Layers,
+  FolderKanban,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -37,6 +38,7 @@ import {
 } from '@/features/inbox-views/services/inbox-views.service';
 import { channelsService } from '@/features/channels/services/channels.service';
 import { segmentsService } from '@/features/segments/services/segments.service';
+import { PROJECT_STATUSES } from '@/features/projects/project-fields';
 import { tagsService } from '@/features/settings/services/tags.service';
 import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -141,6 +143,8 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   const [showGroups, setShowGroups] = useState(false);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(null);
+  const [selectedProjectStatus, setSelectedProjectStatus] = useState('');
+  const [mineProjects, setMineProjects] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [tagSearch, setTagSearch] = useState('');
   // showGroups conta como filtro ativo SÓ quando ON (default OFF é o
@@ -149,6 +153,8 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     (unreadOnly ? 1 : 0) +
     (archivedOnly ? 1 : 0) +
     (showGroups ? 1 : 0) +
+    (selectedProjectStatus ? 1 : 0) +
+    (mineProjects ? 1 : 0) +
     selectedTagIds.length;
   const [scope, setScope] = useState<ScopeFilter>('ALL');
   const [search, setSearch] = useState('');
@@ -186,6 +192,12 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     if (savedPrefs.selectedSegmentId !== undefined) {
       setSelectedSegmentId(savedPrefs.selectedSegmentId ?? null);
     }
+    if (typeof savedPrefs.selectedProjectStatus === 'string') {
+      setSelectedProjectStatus(savedPrefs.selectedProjectStatus);
+    }
+    if (typeof savedPrefs.mineProjects === 'boolean') {
+      setMineProjects(savedPrefs.mineProjects);
+    }
     if (Array.isArray(savedPrefs.tagIds)) {
       setSelectedTagIds(savedPrefs.tagIds);
     }
@@ -221,11 +233,31 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     setArchivedOnly(false);
     setShowGroups(false);
     setSelectedTagIds([]);
+    setSelectedProjectStatus('');
+    setMineProjects(false);
     updatePrefs({
       unreadOnly: false,
       archivedOnly: false,
       showGroups: false,
       tagIds: [],
+      selectedProjectStatus: '',
+      mineProjects: false,
+    });
+  }, [updatePrefs]);
+
+  const handleProjectStatusChange = useCallback(
+    (value: string) => {
+      setSelectedProjectStatus(value);
+      updatePrefs({ selectedProjectStatus: value });
+    },
+    [updatePrefs],
+  );
+
+  const toggleMineProjects = useCallback(() => {
+    setMineProjects((v) => {
+      const next = !v;
+      updatePrefs({ mineProjects: next });
+      return next;
     });
   }, [updatePrefs]);
 
@@ -273,7 +305,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     () => [...selectedTagIds].sort().join(','),
     [selectedTagIds],
   );
-  const filterKey = `${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${showGroups ? 'g' : ''}|t:${tagsKey}`;
+  const filterKey = `${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${showGroups ? 'g' : ''}|ps:${selectedProjectStatus}|mp:${mineProjects ? '1' : ''}|t:${tagsKey}`;
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -354,11 +386,18 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       } else {
         params.archived = archivedOnly ? 'only' : 'exclude';
       }
-      // Segmento selecionado: conversas de grupo compartilhadas entre vários
-      // números. São sempre grupos, então força groups=only e ignora o
-      // toggle/seleção de canal.
+      // Filtros que unificam por grupo (segmento OU projeto) — são sempre
+      // grupos: força groups=only e ignora o filtro de canal. Segmento tem
+      // precedência se ambos estiverem ativos.
+      const hasProjectFilter =
+        !!selectedProjectStatus || (mineProjects && !!currentUserId);
       if (selectedSegmentId) {
         params.segmentId = selectedSegmentId;
+        params.groups = 'only';
+      } else if (hasProjectFilter) {
+        if (selectedProjectStatus) params.projectStatus = selectedProjectStatus;
+        if (mineProjects && currentUserId)
+          params.responsibleUserId = currentUserId;
         params.groups = 'only';
       } else {
         // groups: dentro de view, só override se user MARCOU "Grupos"
@@ -1012,6 +1051,46 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
                   </button>
                 );
               })}
+              {/* ─── Projeto ─── */}
+              <div className="mx-2 my-1 border-t border-zinc-100 dark:border-zinc-800" />
+              <p className="px-2.5 py-1.5 text-[11px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+                Projeto
+              </p>
+              <div className="px-2.5 pb-1.5">
+                <select
+                  value={selectedProjectStatus}
+                  onChange={(e) => handleProjectStatusChange(e.target.value)}
+                  className="w-full rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-[12px] text-zinc-700 outline-none focus:border-primary focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                >
+                  <option value="">Status: todos</option>
+                  {PROJECT_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={toggleMineProjects}
+                className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] transition-colors ${
+                  mineProjects
+                    ? 'bg-primary/[0.06] font-medium text-primary dark:bg-primary/10'
+                    : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <div
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+                    mineProjects
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-zinc-300 dark:border-zinc-600'
+                  }`}
+                >
+                  {mineProjects && <Check className="h-2.5 w-2.5" />}
+                </div>
+                <FolderKanban className="h-3.5 w-3.5 shrink-0" />
+                <span className="flex-1 leading-tight">Meus projetos</span>
+              </button>
+
               {tags.length > 0 && (
                 <>
                   <div className="mx-2 my-1 border-t border-zinc-100 dark:border-zinc-800" />
