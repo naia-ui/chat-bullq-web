@@ -16,6 +16,10 @@ export interface InboxPreferences {
   /** IDs de tags filtradas (OR — conversa precisa ter pelo menos uma).
    *  Match em tag de conversa OU tag de contato. */
   tagIds?: string[];
+  /** Filtro de status de projeto na inbox. */
+  selectedProjectStatus?: string;
+  /** "Meus projetos" — só grupos cujo responsável de projeto sou eu. */
+  mineProjects?: boolean;
 }
 
 export interface UserPreferences {

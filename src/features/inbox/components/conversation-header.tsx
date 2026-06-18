@@ -13,6 +13,7 @@ import {
   Mail,
   Send,
   Activity,
+  FolderKanban,
 } from 'lucide-react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
 import { AssignmentPopover } from './assignment-popover';
@@ -26,6 +27,9 @@ interface ConversationHeaderProps {
   /** When provided, renders a toggle button for the agent-runs sidebar. */
   onToggleAgentLogs?: () => void;
   agentLogsOpen?: boolean;
+  /** When provided + conversation is a group, renders the Project panel toggle. */
+  onToggleProject?: () => void;
+  projectOpen?: boolean;
 }
 
 function ChannelBadge({ type, name }: { type: string; name: string }) {
@@ -100,6 +104,8 @@ export function ConversationHeader({
   onUpdate,
   onToggleAgentLogs,
   agentLogsOpen,
+  onToggleProject,
+  projectOpen,
 }: ConversationHeaderProps) {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -197,6 +203,19 @@ export function ConversationHeader({
         >
           <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
         </button>
+        {onToggleProject && conversation.isGroup && (
+          <button
+            onClick={onToggleProject}
+            title={projectOpen ? 'Fechar projeto' : 'Abrir projeto'}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+              projectOpen
+                ? 'bg-primary/10 text-primary dark:bg-primary/15'
+                : 'text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300'
+            }`}
+          >
+            <FolderKanban className="h-3.5 w-3.5" />
+          </button>
+        )}
         {onToggleAgentLogs && (
           <button
             onClick={onToggleAgentLogs}

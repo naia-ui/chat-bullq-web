@@ -7,9 +7,11 @@ import { MessageSquare } from 'lucide-react';
 import { ConversationList } from '@/features/inbox/components/conversation-list';
 import { ChatPanel } from '@/features/inbox/components/chat-panel';
 import { AgentRunsSidebar } from '@/features/inbox/components/agent-runs-sidebar';
+import { ProjectPanel } from '@/features/inbox/components/project-panel';
 import { inboxService, type Conversation } from '@/features/inbox/services/inbox.service';
 
 const AGENT_LOGS_PREF_KEY = 'inbox.agentLogsOpen';
+const PROJECT_PANEL_PREF_KEY = 'inbox.projectPanelOpen';
 
 export default function InboxPage() {
   const searchParams = useSearchParams();
@@ -27,6 +29,15 @@ export default function InboxPage() {
       // SSR / privacy mode — fine, defaults to closed.
     }
   }, []);
+  const [projectPanelOpen, setProjectPanelOpen] = useState(false);
+  useEffect(() => {
+    try {
+      setProjectPanelOpen(localStorage.getItem(PROJECT_PANEL_PREF_KEY) === '1');
+    } catch {
+      // SSR / privacy mode — fine, defaults to closed.
+    }
+  }, []);
+  // Logs e Projeto são mutuamente exclusivos (largura): abrir um fecha o outro.
   const toggleAgentLogs = useCallback(() => {
     setAgentLogsOpen((prev) => {
       const next = !prev;
@@ -34,6 +45,33 @@ export default function InboxPage() {
         localStorage.setItem(AGENT_LOGS_PREF_KEY, next ? '1' : '0');
       } catch {
         // Ignore storage failures — runtime state still flips.
+      }
+      if (next) {
+        setProjectPanelOpen(false);
+        try {
+          localStorage.setItem(PROJECT_PANEL_PREF_KEY, '0');
+        } catch {
+          // ignore
+        }
+      }
+      return next;
+    });
+  }, []);
+  const toggleProjectPanel = useCallback(() => {
+    setProjectPanelOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(PROJECT_PANEL_PREF_KEY, next ? '1' : '0');
+      } catch {
+        // ignore
+      }
+      if (next) {
+        setAgentLogsOpen(false);
+        try {
+          localStorage.setItem(AGENT_LOGS_PREF_KEY, '0');
+        } catch {
+          // ignore
+        }
       }
       return next;
     });
@@ -110,12 +148,21 @@ export default function InboxPage() {
             onConversationUpdate={handleConversationUpdate}
             onToggleAgentLogs={toggleAgentLogs}
             agentLogsOpen={agentLogsOpen}
+            onToggleProject={toggleProjectPanel}
+            projectOpen={projectPanelOpen}
           />
           {agentLogsOpen && (
             <AgentRunsSidebar
               key={`logs-${activeConversation.id}`}
               conversationId={activeConversation.id}
               onClose={toggleAgentLogs}
+            />
+          )}
+          {projectPanelOpen && activeConversation.isGroup && (
+            <ProjectPanel
+              key={`project-${activeConversation.id}`}
+              conversationId={activeConversation.id}
+              onClose={toggleProjectPanel}
             />
           )}
         </>
