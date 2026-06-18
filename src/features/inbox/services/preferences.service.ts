@@ -5,6 +5,9 @@ export interface InboxPreferences {
   /** @deprecated mantido pra compat de leitura — não escrevemos mais aqui. */
   statusFilters?: string[];
   selectedChannelId?: string | null;
+  /** Filtro por Segmento (grupos compartilhados entre vários números).
+   *  Mutuamente exclusivo com selectedChannelId. */
+  selectedSegmentId?: string | null;
   unreadOnly?: boolean;
   archivedOnly?: boolean;
   /** Quando true, conversas de grupos aparecem no inbox geral. Default
