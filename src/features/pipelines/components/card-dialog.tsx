@@ -17,6 +17,26 @@ interface Props {
   onSaved: () => void;
 }
 
+interface KirvanoMeta {
+  event?: string;
+  productName?: string | null;
+  paymentMethod?: string | null;
+  saleId?: string | null;
+  checkoutUrl?: string | null;
+  utm?: Record<string, unknown> | null;
+}
+
+function KirvanoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <span className="text-zinc-500">{label}</span>
+      <span className="truncate text-right font-medium text-zinc-800 dark:text-zinc-200">
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export function CardDialog({
   open,
   pipelineId,
@@ -46,6 +66,15 @@ export function CardDialog({
   }, [card, open]);
 
   if (!open) return null;
+
+  const meta = (card?.metadata ?? {}) as Record<string, unknown>;
+  const kirvano = (meta.kirvano as KirvanoMeta | undefined) ?? null;
+  const utmSource =
+    kirvano?.utm && typeof kirvano.utm === 'object'
+      ? (kirvano.utm as Record<string, unknown>).utm_source
+      : undefined;
+  const attempts = (meta.outreach as { attempts?: number } | undefined)
+    ?.attempts;
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -172,6 +201,40 @@ export function CardDialog({
               <p className="mt-0.5 font-medium text-zinc-900 dark:text-zinc-100">
                 {card.contact.name || card.contact.phone}
               </p>
+            </div>
+          )}
+
+          {kirvano && (
+            <div className="space-y-1.5 rounded-md border border-zinc-200 bg-zinc-50 p-3 text-xs dark:border-zinc-800 dark:bg-zinc-900/50">
+              <p className="font-medium text-zinc-500">Recuperação (Kirvano)</p>
+              {kirvano.productName && (
+                <KirvanoRow label="Produto" value={kirvano.productName} />
+              )}
+              {kirvano.event && (
+                <KirvanoRow label="Origem" value={kirvano.event} />
+              )}
+              {kirvano.paymentMethod && (
+                <KirvanoRow label="Pagamento" value={kirvano.paymentMethod} />
+              )}
+              {kirvano.saleId && (
+                <KirvanoRow label="Sale ID" value={kirvano.saleId} />
+              )}
+              {utmSource ? (
+                <KirvanoRow label="UTM source" value={String(utmSource)} />
+              ) : null}
+              {typeof attempts === 'number' && (
+                <KirvanoRow label="Tentativas" value={String(attempts)} />
+              )}
+              {kirvano.checkoutUrl && (
+                <a
+                  href={kirvano.checkoutUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block pt-0.5 font-medium text-primary hover:underline"
+                >
+                  Abrir checkout →
+                </a>
+              )}
             </div>
           )}
         </div>

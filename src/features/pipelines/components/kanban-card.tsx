@@ -23,6 +23,30 @@ const formatBRL = (v: number | string | null) => {
   }).format(n);
 };
 
+interface KirvanoMeta {
+  event?: string;
+  productName?: string | null;
+  checkoutUrl?: string | null;
+}
+
+// Rótulo curto da origem do lead (evento da Kirvano) pra mostrar no card.
+const KIRVANO_ORIGIN: Record<string, string> = {
+  PIX_GENERATED: 'PIX',
+  PIX_EXPIRED: 'PIX expirado',
+  BANK_SLIP_GENERATED: 'Boleto',
+  BANK_SLIP_EXPIRED: 'Boleto expirado',
+  ABANDONED_CART: 'Abandono',
+  SALE_REFUSED: 'Recusado',
+  SALE_APPROVED: 'Pago',
+  SALE_REFUNDED: 'Reembolso',
+  SALE_CHARGEBACK: 'Chargeback',
+};
+
+function readKirvano(metadata: Record<string, unknown>): KirvanoMeta | null {
+  const k = (metadata as { kirvano?: KirvanoMeta })?.kirvano;
+  return k && typeof k === 'object' ? k : null;
+}
+
 interface Props {
   card: CardSummary;
   onClick?: () => void;
@@ -44,6 +68,8 @@ export function KanbanCard({ card, onClick }: Props) {
   const contact = card.contact;
   const assignedTo = card.assignedTo;
   const isClosed = card.status !== 'OPEN';
+  const kirvano = readKirvano(card.metadata);
+  const origin = kirvano?.event ? KIRVANO_ORIGIN[kirvano.event] : null;
 
   return (
     <div
@@ -94,7 +120,33 @@ export function KanbanCard({ card, onClick }: Props) {
             perdido
           </span>
         )}
+        {origin && (
+          <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+            {origin}
+          </span>
+        )}
       </div>
+
+      {kirvano && (kirvano.productName || kirvano.checkoutUrl) && (
+        <div className="mt-2 space-y-0.5">
+          {kirvano.productName && (
+            <p className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">
+              {kirvano.productName}
+            </p>
+          )}
+          {kirvano.checkoutUrl && (
+            <a
+              href={kirvano.checkoutUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-block text-[11px] font-medium text-primary hover:underline"
+            >
+              Abrir checkout →
+            </a>
+          )}
+        </div>
+      )}
 
       <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-zinc-500">
         {contact ? (
