@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import {
   aiAgentsService,
+  formatModelLabel,
   type Period,
 } from '../../services/ai-agents.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -199,10 +200,7 @@ export function JarvisOverviewTab() {
           items={(stats?.byModel ?? [])
             .sort((a, b) => b.cost - a.cost)
             .map((m) => ({
-              label: m.modelId
-                .replace('anthropic/', '')
-                .replace('openai/', '')
-                .replace('google/', ''),
+              label: formatModelLabel(m.modelId),
               value: Number(m.cost.toFixed(4)),
               secondaryLabel: `${fmtNum(m.tokens)} tk`,
             }))}

@@ -364,41 +364,28 @@ export interface AgentStats {
   handoffs: { sent: number; received: number };
 }
 
+export const DEFAULT_AGENT_MODEL = 'sakana/fugu-ultra-20260615';
+export const SIMPLE_TASK_MODEL = 'sakana/fugu';
+
 export const CURATED_MODELS = [
   {
-    id: 'anthropic/claude-haiku-4-5',
-    label: 'Claude Haiku 4.5',
-    badge: 'Rápido · barato',
-    recommendedFor: 'orchestrator',
-  },
-  {
-    id: 'anthropic/claude-sonnet-4-6',
-    label: 'Claude Sonnet 4.6',
-    badge: 'Equilíbrio · padrão',
+    id: DEFAULT_AGENT_MODEL,
+    label: 'Sakana Fugu Ultra',
+    badge: 'Conversas · máxima qualidade',
     recommendedFor: 'worker',
   },
   {
-    id: 'anthropic/claude-opus-4-7',
-    label: 'Claude Opus 4.7',
-    badge: 'Premium · mais caro',
-    recommendedFor: 'worker',
-  },
-  {
-    id: 'openai/gpt-4o-mini',
-    label: 'GPT-4o mini',
-    badge: 'Rápido · barato',
-    recommendedFor: 'orchestrator',
-  },
-  {
-    id: 'openai/gpt-4o',
-    label: 'GPT-4o',
-    badge: 'Equilíbrio',
-    recommendedFor: 'worker',
-  },
-  {
-    id: 'google/gemini-2.0-flash-001',
-    label: 'Gemini 2.0 Flash',
-    badge: 'Muito barato',
+    id: SIMPLE_TASK_MODEL,
+    label: 'Sakana Fugu',
+    badge: 'Tarefas simples · mais barato',
     recommendedFor: 'orchestrator',
   },
 ] as const;
+
+export function formatModelLabel(modelId: string): string {
+  return modelId
+    .replace(/^sakana\//, '')
+    .replace(/^anthropic\//, '')
+    .replace(/^openai\//, '')
+    .replace(/^google\//, '');
+}
