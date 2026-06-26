@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { type FeedRun } from '../../services/ai-agents.service';
+import { formatModelLabel, type FeedRun } from '../../services/ai-agents.service';
 import {
   FINAL_ACTION_META,
   STATUS_META,
@@ -108,7 +108,7 @@ function RunRow({
           </div>
         </td>
         <td className="px-3 py-2 text-xs text-zinc-500">
-          {run.modelId.replace('anthropic/', '').replace('openai/', '')}
+          {formatModelLabel(run.modelId)}
         </td>
         <td className="px-3 py-2">
           <span className="inline-flex items-center gap-1.5 text-xs">

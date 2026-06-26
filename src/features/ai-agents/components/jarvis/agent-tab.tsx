@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Bot, Coins, Cpu, Activity, CheckCircle2, ArrowRightLeft } from 'lucide-react';
 import {
   aiAgentsService,
+  formatModelLabel,
   type Period,
 } from '../../services/ai-agents.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
@@ -84,7 +85,7 @@ export function JarvisAgentTab() {
           </select>
           {agent && (
             <span className="text-xs text-zinc-500">
-              {agent.modelId.replace('anthropic/', '').replace('openai/', '')}
+              {formatModelLabel(agent.modelId)}
             </span>
           )}
         </div>

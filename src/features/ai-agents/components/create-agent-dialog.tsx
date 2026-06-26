@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import {
   aiAgentsService,
   CURATED_MODELS,
+  DEFAULT_AGENT_MODEL,
   DEPARTMENTS,
   type AgentKind,
 } from '../services/ai-agents.service';
@@ -35,7 +36,7 @@ export function CreateAgentDialog({
   const [description, setDescription] = useState('');
   const [kind, setKind] = useState<AgentKind>('WORKER');
   const [category, setCategory] = useState('');
-  const [modelId, setModelId] = useState('anthropic/claude-sonnet-4-6');
+  const [modelId, setModelId] = useState(DEFAULT_AGENT_MODEL);
   const [systemPrompt, setSystemPrompt] = useState(DEFAULT_PROMPT);
   const [temperature, setTemperature] = useState(0.7);
   const [parentAgentId, setParentAgentId] = useState<string>('');
@@ -99,7 +100,7 @@ export function CreateAgentDialog({
     setDescription('');
     setKind('WORKER');
     setCategory('');
-    setModelId('anthropic/claude-sonnet-4-6');
+    setModelId(DEFAULT_AGENT_MODEL);
     setSystemPrompt(DEFAULT_PROMPT);
     setTemperature(0.7);
     setParentAgentId('');
@@ -261,7 +262,7 @@ export function CreateAgentDialog({
               ))}
             </select>
             <p className="mt-1 text-[11px] text-zinc-500">
-              Sugestão: Sonnet 4.6 para workers, Haiku 4.5 ou Gemini Flash para orquestrador.
+              Sugestão: Fugu Ultra para conversas; Fugu para tarefas internas simples.
             </p>
           </div>
 

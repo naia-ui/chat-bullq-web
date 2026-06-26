@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import {
   aiAgentsService,
   CURATED_MODELS,
+  DEFAULT_AGENT_MODEL,
   DEPARTMENTS,
   type AiAgent,
   type AgentMode,
@@ -29,7 +30,7 @@ export function EditAgentDialog({
   const orgId = useOrgId();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [modelId, setModelId] = useState('anthropic/claude-sonnet-4-6');
+  const [modelId, setModelId] = useState(DEFAULT_AGENT_MODEL);
   const [systemPrompt, setSystemPrompt] = useState('');
   const [temperature, setTemperature] = useState(0.7);
   const [parentAgentId, setParentAgentId] = useState<string>('');
