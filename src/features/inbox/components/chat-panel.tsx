@@ -613,9 +613,9 @@ export function ChatPanel({
     }
   };
 
-  const handleSendFile = async (file: File) => {
+  const handleSendFile = async (file: File, caption?: string) => {
     try {
-      const sent = await inboxService.sendMediaMessage(conversation.id, file);
+      const sent = await inboxService.sendMediaMessage(conversation.id, file, caption);
       if (sent?.id) mergeMessage(sent);
     } catch (err) {
       queryClient.invalidateQueries({ queryKey: ['messages', conversation.id] });
