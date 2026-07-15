@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Loader2, X, Copy, Check } from 'lucide-react';
 import { channelsService, type ChannelType } from '../services/channels.service';
-import { ZappfyIcon, MetaIcon, InstagramIcon } from '@/components/ui/icons';
+import { ZappfyIcon, MetaIcon, InstagramIcon, GmailIcon } from '@/components/ui/icons';
 
 const channelTypes: { value: ChannelType; label: string; icon: React.ElementType; color: string; description: string }[] = [
   {
@@ -30,6 +30,13 @@ const channelTypes: { value: ChannelType; label: string; icon: React.ElementType
     icon: InstagramIcon,
     color: 'bg-zinc-50 dark:bg-zinc-800',
     description: 'Instagram API com login empresarial — DMs e stories',
+  },
+  {
+    value: 'GMAIL',
+    label: 'Gmail',
+    icon: GmailIcon,
+    color: 'bg-zinc-50 dark:bg-zinc-800',
+    description: 'Emails da caixa Google viram conversas — via polling',
   },
 ];
 
@@ -57,9 +64,17 @@ const instagramSchema = z.object({
   webhookSecret: z.string().optional(),
 });
 
+const gmailSchema = z.object({
+  name: z.string().min(1, 'Nome é obrigatório'),
+  email: z.string().email('Email inválido'),
+  refreshToken: z.string().min(1, 'Refresh Token é obrigatório'),
+  draftMode: z.boolean().optional(),
+});
+
 type ZappfyFormData = z.infer<typeof zappfySchema>;
 type WaOfficialFormData = z.infer<typeof waOfficialSchema>;
 type InstagramFormData = z.infer<typeof instagramSchema>;
+type GmailFormData = z.infer<typeof gmailSchema>;
 
 const inputCls = 'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
 const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
@@ -93,6 +108,11 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
   const igForm = useForm<InstagramFormData>({
     resolver: zodResolver(instagramSchema),
     defaultValues: { name: '', accessToken: '', appSecret: '', igBusinessId: '', igAppId: '', webhookSecret: '' },
+  });
+
+  const gmailForm = useForm<GmailFormData>({
+    resolver: zodResolver(gmailSchema),
+    defaultValues: { name: '', email: '', refreshToken: '', draftMode: false },
   });
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
@@ -152,12 +172,20 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
       data.webhookSecret,
     );
 
+  const onSubmitGmail = (data: GmailFormData) =>
+    submitChannel('GMAIL', data.name, {
+      email: data.email,
+      refreshToken: data.refreshToken,
+      sendMode: data.draftMode ? 'draft' : 'send',
+    });
+
   const handleClose = () => {
     setStep('type');
     setSelectedType(null);
     zappfyForm.reset();
     waForm.reset();
     igForm.reset();
+    gmailForm.reset();
     onClose();
   };
 
@@ -167,6 +195,7 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
     WHATSAPP_ZAPPFY: 'Configurar Zappfy',
     WHATSAPP_OFFICIAL: 'Configurar WhatsApp Official',
     INSTAGRAM: 'Configurar Instagram',
+    GMAIL: 'Configurar Gmail',
   };
 
   return (
@@ -228,6 +257,22 @@ export function CreateChannelDialog({ open, onClose, onCreated }: CreateChannelD
             <Field label="Instagram App ID" placeholder="Opcional — ID do app do Instagram" optional {...igForm.register('igAppId')} />
             <Field label="Webhook Verify Token" placeholder="Token que você definiu no Meta" optional {...igForm.register('webhookSecret')} />
             <WebhookUrl url={`${apiBaseUrl}/webhooks/INSTAGRAM`} copied={copied} onCopy={() => handleCopyWebhook('INSTAGRAM')} />
+            <FormFooter isLoading={isLoading} onBack={() => setStep('type')} />
+          </form>
+        ) : selectedType === 'GMAIL' ? (
+          <form onSubmit={gmailForm.handleSubmit(onSubmitGmail)} className="mt-6 space-y-4">
+            <Field label="Nome do canal" placeholder="Ex: Suporte (email)" error={gmailForm.formState.errors.name?.message} {...gmailForm.register('name')} />
+            <Field label="Email da caixa" placeholder="atendimento@suaempresa.com" error={gmailForm.formState.errors.email?.message} {...gmailForm.register('email')} />
+            <Field label="Refresh Token" type="text" placeholder="OAuth refresh_token da caixa (1//0g...)" error={gmailForm.formState.errors.refreshToken?.message} {...gmailForm.register('refreshToken')} />
+            <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <input type="checkbox" className="h-4 w-4 rounded border-zinc-300" {...gmailForm.register('draftMode')} />
+              Modo rascunho — respostas viram drafts na caixa em vez de serem enviadas
+            </label>
+            <div className="rounded-lg border border-dashed border-zinc-300 bg-zinc-50 p-3 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-400">
+              Não precisa de webhook: os emails são buscados por polling (checagem periódica).
+              O refresh_token é gerado autorizando o OAuth App da plataforma com os escopos
+              gmail.readonly, gmail.send e gmail.modify.
+            </div>
             <FormFooter isLoading={isLoading} onBack={() => setStep('type')} />
           </form>
         ) : null}

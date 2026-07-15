@@ -200,5 +200,12 @@ function fieldsFor(type: Channel['type']): FieldDef[] {
       { key: 'igAppId', label: 'Instagram App ID', optional: true },
     ];
   }
+  if (type === 'GMAIL') {
+    return [
+      { key: 'email', label: 'Email da caixa', placeholder: 'atendimento@suaempresa.com' },
+      { key: 'refreshToken', label: 'Refresh Token', placeholder: 'OAuth refresh_token da caixa (1//0g...)' },
+      { key: 'sendMode', label: 'Modo de envio', placeholder: 'send ou draft', hint: '"send" envia direto; "draft" cria rascunho pra revisão humana', optional: true },
+    ];
+  }
   return [];
 }

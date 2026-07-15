@@ -65,3 +65,15 @@ export function InstagramIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+export function GmailIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+      <rect x="4" y="8" width="28" height="20" rx="3" fill="white" stroke="#E5E7EB" strokeWidth="0.5" />
+      <path d="M4 11a3 3 0 0 1 3-3h1.5v20H7a3 3 0 0 1-3-3V11Z" fill="#4285F4" />
+      <path d="M32 11a3 3 0 0 0-3-3h-1.5v20H29a3 3 0 0 0 3-3V11Z" fill="#34A853" />
+      <path d="M4 11a3 3 0 0 1 4.86-2.34L18 15.5l9.14-6.84A3 3 0 0 1 32 11l-14 10.5L4 11Z" fill="#EA4335" />
+      <path d="M4 11v3l14 10.5L32 14v-3L18 21.5 4 11Z" fill="#C5221F" opacity="0.35" />
+    </svg>
+  );
+}
