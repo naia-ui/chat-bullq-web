@@ -178,6 +178,22 @@ export const inboxService = {
   },
 
   /**
+   * Inicia uma conversa ativa com um contato (que pode nunca ter tido
+   * histórico) e manda a primeira mensagem. Instagram não é suportado
+   * (política da Meta não permite DM a frio) — backend retorna 400.
+   */
+  async startConversation(payload: {
+    channelId: string;
+    contact: { phone?: string; email?: string; name?: string };
+    message: { type: 'TEXT' | 'TEMPLATE'; content: Record<string, any> };
+    /** Só relevante pra Gmail — vira o assunto do email. */
+    subject?: string;
+  }): Promise<Message> {
+    const { data } = await api.post('/conversations', payload);
+    return data.data;
+  },
+
+  /**
    * Deleta mensagem pra todos. Tenta propagar pro provider. Resposta indica
    * se o provider aceitou (cliente final viu sumir) ou se foi só local.
    */

@@ -21,6 +21,7 @@ import {
   Tag as TagIcon,
   Layers,
   FolderKanban,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -46,6 +47,7 @@ import { useSocket } from '../hooks/use-socket';
 import { useAuthStore } from '@/stores/auth-store';
 import { useInboxPreferences } from '../hooks/use-inbox-preferences';
 import { ConversationContextMenu } from './conversation-context-menu';
+import { NewConversationDialog } from './new-conversation-dialog';
 import { BulkAiPopover } from './bulk-ai-popover';
 import { BulkPipelinePopover } from './bulk-pipeline-popover';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
@@ -170,6 +172,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     conversation: Conversation;
     position: { x: number; y: number };
   } | null>(null);
+  const [newConversationOpen, setNewConversationOpen] = useState(false);
 
   // Hydrate state from saved preferences once they load
   useEffect(() => {
@@ -1194,6 +1197,16 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
             </div>
           </PopoverPanel>
         </Popover>
+
+        <button
+          type="button"
+          onClick={() => setNewConversationOpen(true)}
+          title="Nova conversa"
+          aria-label="Nova conversa"
+          className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
+        >
+          <MessageSquarePlus className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       {/* Active filter chips */}
@@ -1539,6 +1552,12 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           onClose={() => setContextMenu(null)}
         />
       )}
+
+      <NewConversationDialog
+        open={newConversationOpen}
+        onClose={() => setNewConversationOpen(false)}
+        onCreated={onSelect}
+      />
     </div>
   );
 }

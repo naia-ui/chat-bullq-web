@@ -67,6 +67,12 @@ export interface ChannelSyncJob {
   updatedAt: string;
 }
 
+export interface WhatsAppTemplate {
+  name: string;
+  language: string;
+  components: Array<Record<string, any>>;
+}
+
 export const channelsService = {
   async list(): Promise<Channel[]> {
     const { data } = await api.get<{ data: Channel[] }>('/channels');
@@ -112,5 +118,11 @@ export const channelsService = {
   async cancelSync(id: string): Promise<ChannelSyncJob | null> {
     const { data } = await api.post<{ data: { job: ChannelSyncJob | null } }>(`/channels/${id}/sync/cancel`);
     return data.data.job;
+  },
+
+  /** Templates HSM aprovados — só existe para canais WHATSAPP_OFFICIAL. */
+  async getTemplates(id: string): Promise<WhatsAppTemplate[]> {
+    const { data } = await api.get<{ data: WhatsAppTemplate[] }>(`/channels/${id}/templates`);
+    return data.data;
   },
 };
