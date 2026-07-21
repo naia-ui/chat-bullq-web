@@ -8,6 +8,7 @@ import { useAudioRecorder } from '../hooks/use-audio-recorder';
 export interface MentionParticipant {
   phone: string;
   name: string;
+  avatarUrl?: string | null;
   isAdmin: boolean;
 }
 
@@ -137,9 +138,9 @@ export function ChatInput({
     const people = participants.filter(
       (p) => p.name.toLowerCase().includes(q) || p.phone.includes(q),
     );
-    const withAll =
+    const withAll: MentionParticipant[] =
       !q || MENTION_ALL_LABEL.startsWith(q)
-        ? [{ phone: MENTION_ALL, name: MENTION_ALL_LABEL, isAdmin: false }]
+        ? [{ phone: MENTION_ALL, name: MENTION_ALL_LABEL, avatarUrl: null, isAdmin: false }]
         : [];
     return [...withAll, ...people].slice(0, 8);
   })();
@@ -403,6 +404,21 @@ export function ChatInput({
                   : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
               }`}
             >
+              {p.phone === MENTION_ALL ? (
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-semibold text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+                  @
+                </span>
+              ) : p.avatarUrl ? (
+                <img
+                  src={p.avatarUrl}
+                  alt=""
+                  className="h-6 w-6 shrink-0 rounded-full bg-zinc-200 object-cover dark:bg-zinc-700"
+                />
+              ) : (
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-[10px] font-semibold text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400">
+                  {p.name.slice(0, 2).toUpperCase()}
+                </span>
+              )}
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">
                   {p.phone === MENTION_ALL ? `@${MENTION_ALL_LABEL}` : p.name}

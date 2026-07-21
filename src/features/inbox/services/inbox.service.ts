@@ -173,7 +173,14 @@ export const inboxService = {
    */
   async getGroupParticipants(
     conversationId: string,
-  ): Promise<Array<{ phone: string; name: string; isAdmin: boolean }>> {
+  ): Promise<
+    Array<{
+      phone: string;
+      name: string;
+      avatarUrl: string | null;
+      isAdmin: boolean;
+    }>
+  > {
     const { data } = await api.get(`/conversations/${conversationId}/participants`);
     return data.data ?? [];
   },

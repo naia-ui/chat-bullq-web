@@ -433,6 +433,18 @@ export function ChatPanel({
     [participants],
   );
 
+  // nome -> foto, pra dar rosto a quem manda mensagem no grupo. A mensagem
+  // guarda o nome do remetente (não o telefone), então é por aí que casamos.
+  const avatarBySender = useMemo(
+    () =>
+      new Map(
+        participants
+          .filter((p) => p.avatarUrl)
+          .map((p) => [p.name, p.avatarUrl as string]),
+      ),
+    [participants],
+  );
+
   const messages = data?.messages || [];
 
   useEffect(() => {
@@ -807,7 +819,14 @@ export function ChatPanel({
                             : conversation.contact.name
                         }
                         avatarUrl={
-                          conversation.isGroup ? null : conversation.contact.avatarUrl
+                          conversation.isGroup
+                            ? // Em grupo o avatar é de quem escreveu, não do
+                              // grupo. Sem match (participante que saiu, ou
+                              // que não é contato nosso), cai nas iniciais.
+                              (msg.senderName
+                                ? avatarBySender.get(msg.senderName)
+                                : null) ?? null
+                            : conversation.contact.avatarUrl
                         }
                       />
                     )}
