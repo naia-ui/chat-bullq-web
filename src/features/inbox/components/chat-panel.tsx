@@ -120,6 +120,12 @@ function statusTooltip(status: string, failedReason?: string | null): string {
   }
 }
 
+const MESSAGES_PAGE_SIZE = 50;
+/** Quanto o histórico cresce a cada tentativa de achar a mensagem citada. */
+const HISTORY_STEP = 150;
+/** Teto de mensagens carregadas — além disso a conversa fica pesada demais. */
+const MAX_HISTORY = 800;
+
 const URL_REGEX = /(https?:\/\/[^\s]+)/gi;
 const IG_CDN_HOSTS = /(lookaside\.fbsbx\.com|cdninstagram\.com|fbcdn\.net)/i;
 
@@ -402,12 +408,24 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { on, emit, onReconnect } = useSocket();
   const user = useAuthStore((s) => s.user);
 
-  const { data, isLoading } = useQuery({
+  // Quantas mensagens pedimos ao backend. A página 1 devolve as N mais
+  // recentes, então "carregar histórico" é só aumentar o limite — sem offset,
+  // que escorregaria a cada mensagem nova chegando durante a navegação.
+  // Fica num ref (e não só no state) pra key da query continuar estável:
+  // o merge do socket e os outros setQueryData referenciam ['messages', id].
+  const limitRef = useRef(MESSAGES_PAGE_SIZE);
+  const [historyLimit, setHistoryLimit] = useState(MESSAGES_PAGE_SIZE);
+  // Mensagem destacada pelo "pular pra citada". Fica em state (não em
+  // classList) pra sobreviver aos re-renders do realtime durante o destaque.
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['messages', conversation.id],
-    queryFn: () => inboxService.getMessages(conversation.id),
+    queryFn: () => inboxService.getMessages(conversation.id, 1, limitRef.current),
     // Defenses against socket gaps: refetch when the tab regains focus
     // and on browser-level reconnect. Realtime is the happy path; these
     // catch the case where a `message:new` was missed.
@@ -616,9 +634,81 @@ export function ChatPanel({
     [conversation.id, queryClient],
   );
 
+  // Auto-scroll pro fim quando chega mensagem NOVA. Observa o id da última
+  // mensagem, não a contagem: carregar histórico antigo também aumenta a
+  // contagem, e aí o scroll pro fim desfaria o "pular pra citada".
+  const lastMessageId = messages[messages.length - 1]?.id;
   useEffect(() => {
+    if (!lastMessageId) return;
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length]);
+  }, [lastMessageId]);
+
+  const hasMoreHistory =
+    (data?.pagination?.total ?? 0) > messages.length &&
+    historyLimit < MAX_HISTORY;
+
+  /** Carrega mais um lote de histórico. Devolve false quando não há o que carregar. */
+  const loadMoreHistory = useCallback(async () => {
+    if (limitRef.current >= MAX_HISTORY) return false;
+    limitRef.current = Math.min(MAX_HISTORY, limitRef.current + HISTORY_STEP);
+    setHistoryLimit(limitRef.current);
+    const before = messages.length;
+    // O lote entra ACIMA do que está na tela; sem compensar, a leitura salta.
+    // Guardamos a altura antes e reposicionamos pela diferença depois.
+    const heightBefore = scrollRef.current?.scrollHeight ?? 0;
+    const offsetBefore = scrollRef.current?.scrollTop ?? 0;
+    await queryClient.refetchQueries({
+      queryKey: ['messages', conversation.id],
+      exact: true,
+    });
+    requestAnimationFrame(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      el.scrollTop = offsetBefore + (el.scrollHeight - heightBefore);
+    });
+    const after =
+      queryClient.getQueryData<{ messages: Message[] }>([
+        'messages',
+        conversation.id,
+      ])?.messages.length ?? before;
+    // Nada novo veio: já estamos no começo da conversa.
+    return after > before;
+  }, [conversation.id, messages.length, queryClient]);
+
+  /**
+   * Leva o usuário até a mensagem citada. Ela pode estar fora do trecho
+   * carregado — nesse caso vamos puxando histórico até achar (ou até bater
+   * no teto, quando avisamos em vez de falhar em silêncio).
+   */
+  const jumpToMessage = useCallback(
+    async (targetId?: string) => {
+      if (!targetId) return;
+
+      const focus = () => {
+        const el = document.getElementById(`msg-${targetId}`);
+        if (!el) return false;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setHighlightedId(targetId);
+        setTimeout(() => {
+          setHighlightedId((current) => (current === targetId ? null : current));
+        }, 2000);
+        return true;
+      };
+
+      if (focus()) return;
+
+      while (limitRef.current < MAX_HISTORY) {
+        const grew = await loadMoreHistory();
+        // Espera o React pintar o lote novo antes de procurar no DOM.
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+        if (focus()) return;
+        if (!grew) break;
+      }
+
+      toast.info('A mensagem citada não está mais no histórico desta conversa.');
+    },
+    [loadMoreHistory],
+  );
 
   // Reply state — quando setado, próxima msg enviada vai com replyToMessageId
   // e a UI mostra a barra "respondendo a..." acima do input. Reseta ao
@@ -735,7 +825,10 @@ export function ChatPanel({
         messages={messages}
       />
 
-      <div className="min-h-0 flex-1 overflow-y-auto bg-zinc-50 p-4 dark:bg-zinc-900/50">
+      <div
+        ref={scrollRef}
+        className="min-h-0 flex-1 overflow-y-auto bg-zinc-50 p-4 dark:bg-zinc-900/50"
+      >
         {isLoading ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -746,6 +839,18 @@ export function ChatPanel({
           </div>
         ) : (
           <div className="mx-auto max-w-2xl space-y-2">
+            {hasMoreHistory && (
+              <div className="flex justify-center pb-2">
+                <button
+                  type="button"
+                  onClick={() => loadMoreHistory()}
+                  disabled={isFetching}
+                  className="rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs text-zinc-600 hover:bg-zinc-50 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  {isFetching ? 'Carregando…' : 'Carregar mensagens anteriores'}
+                </button>
+              </div>
+            )}
             {(() => {
               const reactionMap = new Map<string, string[]>();
               for (const msg of messages) {
@@ -780,7 +885,13 @@ export function ChatPanel({
                   )}
                   <div
                     id={`msg-${msg.id}`}
-                    className={`group flex items-end gap-2 ${isOutbound ? 'justify-end' : 'justify-start'}`}
+                    className={`group flex items-end gap-2 rounded-lg transition-colors duration-500 ${
+                      isOutbound ? 'justify-end' : 'justify-start'
+                    } ${
+                      highlightedId === msg.id
+                        ? 'bg-primary/10 ring-2 ring-primary'
+                        : ''
+                    }`}
                   >
                     {/* Botão "Responder" no hover. Aparece do lado de
                         FORA da bolha — esquerda quando outbound (msg
@@ -875,22 +986,9 @@ export function ChatPanel({
                           msg.metadata.replyTo.senderName) && (
                           <button
                             type="button"
-                            onClick={() => {
-                              const targetId = msg.metadata?.replyTo?.messageId;
-                              if (!targetId) return;
-                              const el = document.getElementById(
-                                `msg-${targetId}`,
-                              );
-                              if (el) {
-                                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                el.classList.add('ring-2', 'ring-primary');
-                                setTimeout(
-                                  () =>
-                                    el.classList.remove('ring-2', 'ring-primary'),
-                                  1500,
-                                );
-                              }
-                            }}
+                            onClick={() =>
+                              jumpToMessage(msg.metadata?.replyTo?.messageId)
+                            }
                             className={`mb-1 block w-full rounded-md border-l-2 border-primary px-2 py-1 text-left text-xs ${
                               isOutbound
                                 ? 'bg-primary/10 text-primary-foreground/80'
@@ -987,8 +1085,20 @@ export function ChatPanel({
                             <MediaLocation message={msg} isOutbound={isOutbound} />
                           ) : msg.type === 'TEMPLATE' ? (
                             <TemplateMessage content={msg.content} isOutbound={isOutbound} />
+                          ) : msg.content?.text ? (
+                            // INTERACTIVE (botão/lista clicados), SYSTEM e
+                            // qualquer tipo novo: o backend sempre entrega uma
+                            // versão legível em content.text. Mostrar isso é
+                            // melhor que a etiqueta crua "[INTERACTIVE]".
+                            <MessageText
+                              text={msg.content.text}
+                              isOutbound={isOutbound}
+                              mentionNames={mentionNames}
+                            />
                           ) : (
-                            <p className="text-sm italic opacity-70">[{msg.type}]</p>
+                            <p className="text-sm italic opacity-70">
+                              Mensagem não suportada
+                            </p>
                           )}
                           <div
                             className={`mt-1 flex items-center gap-1 text-[10px] ${
