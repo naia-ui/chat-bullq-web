@@ -1031,8 +1031,14 @@ export function ChatPanel({
                               </p>
                             )}
                             {msg.metadata.replyTo.previewText && (
+                              // Mesma troca de @telefone por nome que a
+                              // mensagem normal faz — sem isso a citação de
+                              // uma mensagem com menção mostrava o número.
                               <p className="mt-0.5 truncate">
-                                {msg.metadata.replyTo.previewText}
+                                {humanizeMentions(
+                                  msg.metadata.replyTo.previewText,
+                                  mentionNames,
+                                )}
                               </p>
                             )}
                           </button>
@@ -1185,7 +1191,11 @@ export function ChatPanel({
       </div>
 
       {replyingTo && (
-        <ReplyPreviewBar message={replyingTo} onCancel={cancelReply} />
+        <ReplyPreviewBar
+          message={replyingTo}
+          onCancel={cancelReply}
+          mentionNames={mentionNames}
+        />
       )}
       <ChatInput
         onSend={handleSend}
@@ -1206,19 +1216,28 @@ export function ChatPanel({
 function ReplyPreviewBar({
   message,
   onCancel,
+  mentionNames,
 }: {
   message: Message;
   onCancel: () => void;
+  mentionNames?: Map<string, string>;
 }) {
-  const sender =
+  // Em grupo o remetente pode chegar como telefone; o mapa de participantes
+  // resolve pro nome, e sem match preferimos "Cliente" a um número cru.
+  const rawSender =
     message.direction === 'OUTBOUND'
       ? message.sender?.name || 'Você'
       : (message.senderName ?? 'Cliente');
+  const sender = /^\+?\d[\d\s()-]*$/.test(rawSender)
+    ? (mentionNames?.get(rawSender.replace(/\D/g, '')) ?? 'Cliente')
+    : rawSender;
   const c = (message.content ?? {}) as Record<string, any>;
-  const preview =
+  const preview = humanizeMentions(
     (typeof c.text === 'string' && c.text) ||
-    (typeof c.caption === 'string' && c.caption) ||
-    `[${(message.type || 'mensagem').toLowerCase()}]`;
+      (typeof c.caption === 'string' && c.caption) ||
+      `[${(message.type || 'mensagem').toLowerCase()}]`,
+    mentionNames,
+  );
   return (
     <div className="flex items-center gap-2 border-t border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex-1 min-w-0 border-l-2 border-primary pl-2">
