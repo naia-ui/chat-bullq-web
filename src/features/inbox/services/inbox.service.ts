@@ -166,9 +166,22 @@ export const inboxService = {
     return data.data;
   },
 
+  /**
+   * Participantes de um grupo, pro autocomplete de menção (@).
+   * Devolve [] quando a conversa não é grupo ou o provider não respondeu —
+   * nesse caso a UI simplesmente não oferece menção.
+   */
+  async getGroupParticipants(
+    conversationId: string,
+  ): Promise<Array<{ phone: string; name: string; isAdmin: boolean }>> {
+    const { data } = await api.get(`/conversations/${conversationId}/participants`);
+    return data.data ?? [];
+  },
+
   async sendMessage(payload: {
     conversationId: string;
     type: string;
+    /** Em grupo, `content.mentions` (telefones ou 'all') marca participantes. */
     content: Record<string, any>;
     /** ID interno da Message respondida — backend resolve externalId. */
     replyToMessageId?: string;

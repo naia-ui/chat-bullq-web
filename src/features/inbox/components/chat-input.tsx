@@ -5,12 +5,24 @@ import { Send, Paperclip, Mic, Trash2, Square, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAudioRecorder } from '../hooks/use-audio-recorder';
 
+export interface MentionParticipant {
+  phone: string;
+  name: string;
+  isAdmin: boolean;
+}
+
 interface ChatInputProps {
-  onSend: (text: string) => Promise<void>;
+  onSend: (text: string, mentions?: string[] | 'all') => Promise<void>;
   onSendAudio?: (blob: Blob) => Promise<void>;
   onSendFile?: (file: File, caption?: string) => Promise<void>;
   disabled?: boolean;
+  /** Participantes do grupo. Vazio/ausente desliga o autocomplete de @. */
+  participants?: MentionParticipant[];
 }
+
+/** Entrada especial do menu: marca todo mundo do grupo. */
+const MENTION_ALL = '__all__';
+const MENTION_ALL_LABEL = 'todos';
 
 // Espelha o whitelist do backend (UploadsService.ALLOWED_MEDIA_MIME) — o
 // accept é só UX; a validação real acontece no upload.
@@ -29,8 +41,22 @@ const FILE_ACCEPT = [
   '.zip',
 ].join(',');
 
-export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  onSendAudio,
+  onSendFile,
+  disabled,
+  participants = [],
+}: ChatInputProps) {
   const [text, setText] = useState('');
+  // Menções escolhidas nesta mensagem: rótulo exibido -> telefone (ou 'all').
+  // No envio, cada rótulo vira `@<telefone>` no texto, que é o que o WhatsApp
+  // precisa pra desenhar a menção destacada.
+  const [picked, setPicked] = useState<Map<string, string>>(new Map());
+  // Índice onde começa o `@` que está sendo digitado; null = menu fechado.
+  const [mentionAt, setMentionAt] = useState<number | null>(null);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionIndex, setMentionIndex] = useState(0);
   const [isSending, setIsSending] = useState(false);
   const [isSendingAudio, setIsSendingAudio] = useState(false);
   const [isSendingFile, setIsSendingFile] = useState(false);
@@ -76,15 +102,98 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
     if (!trimmed || isSending) return;
     setIsSending(true);
     try {
-      await onSend(trimmed);
+      // Troca `@Fulano` pelo `@<telefone>` que o protocolo exige, e junta os
+      // telefones de quem realmente sobrou no texto (menção apagada não vai).
+      let outbound = trimmed;
+      const phones: string[] = [];
+      let all = false;
+      for (const [label, phone] of picked) {
+        const token = `@${label}`;
+        if (!outbound.includes(token)) continue;
+        if (phone === MENTION_ALL) {
+          all = true;
+          continue;
+        }
+        outbound = outbound.split(token).join(`@${phone}`);
+        phones.push(phone);
+      }
+      const mentions = all ? 'all' : phones.length ? phones : undefined;
+      await onSend(outbound, mentions);
       setText('');
+      setPicked(new Map());
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
     } finally {
       setIsSending(false);
     }
-  }, [pastedImage, text, isSending, isSendingFile, onSend, onSendFile]);
+  }, [pastedImage, text, isSending, isSendingFile, onSend, onSendFile, picked]);
+
+  // Lista filtrada do menu de menção. "todos" só aparece sem busca ou quando
+  // o texto digitado casa com ele.
+  const mentionMatches = (() => {
+    if (mentionAt === null || !participants.length) return [];
+    const q = mentionQuery.toLowerCase();
+    const people = participants.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.phone.includes(q),
+    );
+    const withAll =
+      !q || MENTION_ALL_LABEL.startsWith(q)
+        ? [{ phone: MENTION_ALL, name: MENTION_ALL_LABEL, isAdmin: false }]
+        : [];
+    return [...withAll, ...people].slice(0, 8);
+  })();
+
+  /** Fecha o menu sem escolher nada. */
+  const closeMention = useCallback(() => {
+    setMentionAt(null);
+    setMentionQuery('');
+    setMentionIndex(0);
+  }, []);
+
+  /**
+   * Reavalia se o cursor está dentro de um `@algo`. Um `@` só abre o menu
+   * quando está no começo do texto ou depois de espaço — assim e-mail não
+   * dispara o autocomplete.
+   */
+  const syncMentionState = useCallback(
+    (value: string, caret: number) => {
+      if (!participants.length) return;
+      const upto = value.slice(0, caret);
+      const at = upto.lastIndexOf('@');
+      if (at === -1) return closeMention();
+      const before = at > 0 ? upto[at - 1] : ' ';
+      const query = upto.slice(at + 1);
+      // Espaço encerra a busca — nomes com espaço são escolhidos pelo menu,
+      // não digitados por inteiro.
+      if (!/\s/.test(before) || /\s/.test(query)) return closeMention();
+      setMentionAt(at);
+      setMentionQuery(query);
+      setMentionIndex(0);
+    },
+    [participants.length, closeMention],
+  );
+
+  /** Insere a menção escolhida no lugar do `@parcial` que estava sendo digitado. */
+  const applyMention = useCallback(
+    (p: MentionParticipant) => {
+      if (mentionAt === null) return;
+      const el = textareaRef.current;
+      const caret = el?.selectionStart ?? text.length;
+      const label = p.phone === MENTION_ALL ? MENTION_ALL_LABEL : p.name;
+      const next = `${text.slice(0, mentionAt)}@${label} ${text.slice(caret)}`;
+      setPicked((prev) => new Map(prev).set(label, p.phone));
+      setText(next);
+      closeMention();
+      // Cursor logo depois da menção inserida.
+      const pos = mentionAt + label.length + 2;
+      requestAnimationFrame(() => {
+        el?.focus();
+        el?.setSelectionRange(pos, pos);
+      });
+    },
+    [mentionAt, text, closeMention],
+  );
 
   const handlePaste = useCallback(
     (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -114,6 +223,31 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
   const discardImage = () => setPastedImage(null); // useEffect revoga a URL
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Com o menu de menção aberto, as setas/Enter/Tab pertencem a ele.
+    if (mentionMatches.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex((i) => (i + 1) % mentionMatches.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex(
+          (i) => (i - 1 + mentionMatches.length) % mentionMatches.length,
+        );
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        applyMention(mentionMatches[mentionIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeMention();
+        return;
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -250,7 +384,48 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
   const showMic = canRecord && !text.trim() && !pastedImage;
 
   return (
-    <div className="border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="relative border-t border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+      {mentionMatches.length > 0 && (
+        <div className="absolute bottom-full left-3 z-20 mb-1 max-h-64 w-72 overflow-y-auto rounded-xl border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+          {mentionMatches.map((p, i) => (
+            <button
+              key={p.phone}
+              type="button"
+              // onMouseDown: o onBlur do textarea fecharia o menu antes do click.
+              onMouseDown={(e) => {
+                e.preventDefault();
+                applyMention(p);
+              }}
+              onMouseEnter={() => setMentionIndex(i)}
+              className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm ${
+                i === mentionIndex
+                  ? 'bg-zinc-100 dark:bg-zinc-800'
+                  : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
+              }`}
+            >
+              <span className="min-w-0 flex-1 truncate">
+                <span className="font-medium">
+                  {p.phone === MENTION_ALL ? `@${MENTION_ALL_LABEL}` : p.name}
+                </span>
+                {p.phone === MENTION_ALL ? (
+                  <span className="ml-2 text-xs text-zinc-400">
+                    marca o grupo inteiro
+                  </span>
+                ) : (
+                  p.name.replace(/\D/g, '') !== p.phone && (
+                    <span className="ml-2 text-xs text-zinc-400">{p.phone}</span>
+                  )
+                )}
+              </span>
+              {p.isAdmin && (
+                <span className="shrink-0 rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                  admin
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
       {pastedImage && previewUrl && (
         <div className="mb-2 flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-700 dark:bg-zinc-900">
           <img
@@ -296,9 +471,19 @@ export function ChatInput({ onSend, onSendAudio, onSendFile, disabled }: ChatInp
         <textarea
           ref={textareaRef}
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value);
+            syncMentionState(e.target.value, e.target.selectionStart ?? 0);
+          }}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
+          onClick={(e) =>
+            syncMentionState(
+              (e.target as HTMLTextAreaElement).value,
+              (e.target as HTMLTextAreaElement).selectionStart ?? 0,
+            )
+          }
+          onBlur={() => setTimeout(closeMention, 120)}
           onPaste={handlePaste}
           placeholder={pastedImage ? 'Adicione uma legenda...' : 'Digite uma mensagem...'}
           rows={1}

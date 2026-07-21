@@ -1,6 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState, useCallback } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Check, CheckCheck, Clock, AlertCircle, ExternalLink, Reply, Trash2, X, Ban } from 'lucide-react';
 import { toast } from 'sonner';
@@ -201,22 +201,41 @@ function renderInlineTextWithLinks(text: string, isOutbound: boolean) {
   });
 }
 
+/**
+ * No protocolo do WhatsApp a menção viaja como `@<telefone>`. Na tela isso é
+ * ilegível, então trocamos pelo nome de quem conhecemos. Quem não está na
+ * lista continua aparecendo como número, igual ao app oficial.
+ */
+function humanizeMentions(
+  text: string,
+  nameByPhone?: Map<string, string>,
+): string {
+  if (!nameByPhone?.size) return text;
+  return text.replace(/@(\d{10,15})\b/g, (full, phone) => {
+    const name = nameByPhone.get(phone);
+    return name ? `@${name}` : full;
+  });
+}
+
 function MessageText({
   text,
   isOutbound,
   className = '',
+  mentionNames,
 }: {
   text: string;
   isOutbound: boolean;
   className?: string;
+  mentionNames?: Map<string, string>;
 }) {
-  const onlyUrl = matchSingleUrl(text);
+  const shown = humanizeMentions(text, mentionNames);
+  const onlyUrl = matchSingleUrl(shown);
   if (onlyUrl) {
     return <LinkPreviewCard url={onlyUrl} isOutbound={isOutbound} />;
   }
   return (
     <p className={`whitespace-pre-wrap wrap-break-word text-sm ${className}`}>
-      {renderInlineTextWithLinks(text, isOutbound)}
+      {renderInlineTextWithLinks(shown, isOutbound)}
     </p>
   );
 }
@@ -396,6 +415,23 @@ export function ChatPanel({
     refetchOnReconnect: true,
     staleTime: 5000,
   });
+
+  // Participantes só interessam em grupo e mudam pouco — busca uma vez por
+  // conversa e mantém em cache. Falha aqui não quebra o chat: sem lista, o
+  // composer apenas não oferece menção.
+  const { data: participants = [] } = useQuery({
+    queryKey: ['group-participants', conversation.id],
+    queryFn: () => inboxService.getGroupParticipants(conversation.id),
+    enabled: !!conversation.isGroup,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // telefone -> nome, pra trocar `@5545...` pelo nome na hora de exibir.
+  const mentionNames = useMemo(
+    () => new Map(participants.map((p) => [p.phone, p.name])),
+    [participants],
+  );
 
   const messages = data?.messages || [];
 
@@ -582,7 +618,7 @@ export function ChatPanel({
   }, []);
   const cancelReply = useCallback(() => setReplyingTo(null), []);
 
-  const handleSend = async (text: string) => {
+  const handleSend = async (text: string, mentions?: string[] | 'all') => {
     const replyToMessageId = replyingTo?.id;
     try {
       // Insere a mensagem no cache com a resposta do POST — não dependemos
@@ -591,7 +627,7 @@ export function ChatPanel({
       const sent = await inboxService.sendMessage({
         conversationId: conversation.id,
         type: 'TEXT',
-        content: { text },
+        content: mentions ? { text, mentions } : { text },
         replyToMessageId,
       });
       if (sent?.id) mergeMessage(sent);
@@ -918,6 +954,7 @@ export function ChatPanel({
                             <MessageText
                               text={msg.content?.text || ''}
                               isOutbound={isOutbound}
+                              mentionNames={mentionNames}
                             />
                           ) : msg.type === 'IMAGE' ? (
                             <MediaImage message={msg} isOutbound={isOutbound} />
@@ -996,6 +1033,7 @@ export function ChatPanel({
         onSendAudio={handleSendAudio}
         onSendFile={handleSendFile}
         disabled={conversation.status === 'CLOSED'}
+        participants={participants}
       />
     </div>
   );
