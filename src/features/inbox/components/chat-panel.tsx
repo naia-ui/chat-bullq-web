@@ -315,9 +315,36 @@ function TemplateMessage({
   const elements = tpl.elements ?? [];
   const buttons = tpl.buttons ?? [];
 
+  // Envio HSM da Cloud API: o `content` é o payload que mandamos pro Meta
+  // (`{name, language, components}`) e o corpo aprovado do template só existe
+  // lá — não temos o texto. Sem este fallback a bolha ficava em branco.
+  // Mostramos o que de fato enviamos: o template e as variáveis preenchidas.
+  const hsmName: string | undefined = !headerText ? content?.name : undefined;
+  const hsmParams: string[] = hsmName
+    ? ((content?.components ?? []) as any[])
+        .flatMap((c) => (c?.parameters ?? []) as any[])
+        .map((p) => p?.text)
+        .filter(Boolean)
+    : [];
+
   return (
     <div className="space-y-2">
       {headerText && <MessageText text={headerText} isOutbound={isOutbound} />}
+
+      {hsmName && (
+        <div
+          className={`rounded-lg border px-3 py-2 text-sm ${
+            isOutbound
+              ? 'border-primary-foreground/20 bg-primary-foreground/5'
+              : 'border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/60'
+          }`}
+        >
+          <p className="font-medium">Modelo: {hsmName}</p>
+          {hsmParams.length > 0 && (
+            <p className="mt-0.5 opacity-80">{hsmParams.join(' · ')}</p>
+          )}
+        </div>
+      )}
 
       {elements.map((el, i) => (
         <div
@@ -962,7 +989,7 @@ export function ChatPanel({
                         <div
                           className={`mb-1 rounded-xl border px-3 py-2 text-xs ${
                             isOutbound
-                              ? 'border-primary/40 bg-primary/10 text-primary-foreground/80'
+                              ? 'border-primary/40 bg-primary/10 text-primary dark:text-primary-foreground/90'
                               : 'border-zinc-200 bg-zinc-50 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400'
                           }`}
                         >
@@ -991,7 +1018,10 @@ export function ChatPanel({
                             }
                             className={`mb-1 block w-full rounded-md border-l-2 border-primary px-2 py-1 text-left text-xs ${
                               isOutbound
-                                ? 'bg-primary/10 text-primary-foreground/80'
+                                ? // O quote fica FORA da bolha, sobre o fundo da
+                                  // página — texto tem que contrastar com ele, não
+                                  // com o azul da bolha.
+                                  'bg-primary/10 text-primary hover:bg-primary/20 dark:text-primary-foreground/90'
                                 : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800/70 dark:text-zinc-300 dark:hover:bg-zinc-800'
                             }`}
                           >
