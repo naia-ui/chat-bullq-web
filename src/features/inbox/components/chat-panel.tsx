@@ -603,13 +603,41 @@ export function ChatPanel({
         },
       );
     });
+    // Foto do contato/grupo que o backend acabou de buscar: troca no header
+    // sem refetch. Em grupo, também derruba o cache dos participantes, que é
+    // de onde sai a foto de quem escreveu cada mensagem.
+    const unsubAvatar = on('contact:avatar', (payload: any) => {
+      const contactId = payload?.contactId;
+      const avatarUrl = payload?.avatarUrl;
+      if (!contactId || !avatarUrl) return;
+      if (conversation.contact?.id === contactId) {
+        queryClient.setQueryData<any>(['conversation', conversation.id], (old: any) =>
+          old ? { ...old, contact: { ...old.contact, avatarUrl } } : old,
+        );
+      }
+      if (conversation.isGroup) {
+        queryClient.invalidateQueries({
+          queryKey: ['group-participants', conversation.id],
+        });
+      }
+    });
+
     return () => {
       unsubNew?.();
       unsubStatus?.();
       unsubReconnect?.();
       unsubRevoked?.();
+      unsubAvatar?.();
     };
-  }, [conversation.id, on, onReconnect, queryClient, mergeMessage]);
+  }, [
+    conversation.id,
+    conversation.contact?.id,
+    conversation.isGroup,
+    on,
+    onReconnect,
+    queryClient,
+    mergeMessage,
+  ]);
 
   const handleRevoke = useCallback(
     async (msg: Message) => {

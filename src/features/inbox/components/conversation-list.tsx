@@ -599,6 +599,31 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     });
     // When the same user reads a conversation in another tab/device, zero
     // the badge here too without a full refetch.
+    // A foto do contato/grupo chega depois da lista (o backend busca no
+    // provider em segundo plano). Trocamos só o avatar da linha, sem
+    // refetch: a lista não pisca e a posição do scroll fica onde estava.
+    const unsubAvatar = on('contact:avatar', (payload: any) => {
+      const contactId = payload?.contactId;
+      const avatarUrl = payload?.avatarUrl;
+      if (!contactId || !avatarUrl) return;
+      queryClient.setQueriesData<any>(
+        { queryKey: ['conversations'] },
+        (old: any) => {
+          if (!old?.pages) return old;
+          return {
+            ...old,
+            pages: old.pages.map((p: any) => ({
+              ...p,
+              conversations: p.conversations.map((c: Conversation) =>
+                c.contact?.id === contactId
+                  ? { ...c, contact: { ...c.contact, avatarUrl } }
+                  : c,
+              ),
+            })),
+          };
+        },
+      );
+    });
     const unsubRead = on('conversation:read', (payload: any) => {
       const id = payload?.conversationId;
       if (!id) return;
@@ -653,6 +678,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       unsubNew?.();
       unsubImported?.();
       unsubUpdated?.();
+      unsubAvatar?.();
       unsubRead?.();
       unsubUnread?.();
       unsubReconnect?.();
