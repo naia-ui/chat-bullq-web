@@ -380,6 +380,36 @@ export const CURATED_MODELS = [
     badge: 'Tarefas simples · mais barato',
     recommendedFor: 'orchestrator',
   },
+  {
+    id: 'anthropic/claude-sonnet-5',
+    label: 'Claude Sonnet 5',
+    badge: 'Conversas · Anthropic',
+    recommendedFor: 'worker',
+  },
+  {
+    id: 'anthropic/claude-haiku-4-5-20251001',
+    label: 'Claude Haiku 4.5',
+    badge: 'Tarefas simples · Anthropic, mais barato',
+    recommendedFor: 'orchestrator',
+  },
+  {
+    id: 'anthropic/claude-opus-4-8',
+    label: 'Claude Opus 4.8',
+    badge: 'Máxima qualidade · Anthropic, mais caro',
+    recommendedFor: 'worker',
+  },
+  {
+    id: 'openai/gpt-4.1',
+    label: 'GPT-4.1',
+    badge: 'Conversas · OpenAI',
+    recommendedFor: 'worker',
+  },
+  {
+    id: 'openai/gpt-4.1-mini',
+    label: 'GPT-4.1 Mini',
+    badge: 'Tarefas simples · OpenAI, mais barato',
+    recommendedFor: 'orchestrator',
+  },
 ] as const;
 
 export function formatModelLabel(modelId: string): string {
