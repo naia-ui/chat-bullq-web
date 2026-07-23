@@ -228,6 +228,26 @@ export const inboxService = {
     return data.data ?? data;
   },
 
+  /**
+   * Encaminha uma mensagem (qualquer tipo) para conversas WhatsApp existentes
+   * e/ou números novos. O backend reconstrói o conteúdo e reenvia pelo pipeline
+   * normal — a bolha chega nos destinos abertos via realtime `message:new`.
+   */
+  async forwardMessage(payload: {
+    messageId: string;
+    conversationIds?: string[];
+    contacts?: Array<{ channelId: string; phone: string; name?: string }>;
+  }): Promise<{
+    sent: Message[];
+    failed: Array<{ target: string; reason: string }>;
+  }> {
+    const { data } = await api.post(`/messages/${payload.messageId}/forward`, {
+      conversationIds: payload.conversationIds,
+      contacts: payload.contacts,
+    });
+    return data.data ?? data;
+  },
+
   async assignToMe(conversationId: string): Promise<Conversation> {
     const { data } = await api.post(`/conversations/${conversationId}/assign-me`);
     return data.data;
