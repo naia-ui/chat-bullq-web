@@ -6,8 +6,12 @@ import { Providers } from '@/components/providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Chat BullQ',
+  title: 'Justine OS',
   description: 'Omnichannel customer service platform',
+  icons: {
+    icon: '/logo.png',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
