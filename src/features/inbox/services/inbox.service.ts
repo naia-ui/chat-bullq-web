@@ -382,6 +382,10 @@ export const inboxService = {
     return data.data;
   },
 
+  async deleteConversation(conversationId: string, confirm: string): Promise<void> {
+    await api.delete(`/conversations/${conversationId}`, { params: { confirm } });
+  },
+
   async resolveMediaUrl(messageId: string): Promise<{ url: string; mimeType?: string }> {
     const { data } = await api.get(`/messages/${messageId}/media`);
     return data.data;

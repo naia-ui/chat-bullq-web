@@ -18,6 +18,7 @@ import {
   Pencil,
   Mail,
   X,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { tagsService, type Tag } from '@/features/settings/services/tags.service';
@@ -27,6 +28,8 @@ import { inboxViewsService, type InboxView } from '@/features/inbox-views/servic
 import { inboxService } from '../services/inbox.service';
 import type { Conversation } from '../services/inbox.service';
 import { RenameConversationDialog } from './rename-conversation-dialog';
+import { DeleteConversationDialog } from './delete-conversation-dialog';
+import { useAuthStore } from '@/stores/auth-store';
 
 type Target = 'conversation' | 'contact';
 
@@ -54,8 +57,13 @@ export function ConversationContextMenu({
   const [archiving, setArchiving] = useState(false);
   const [markingUnread, setMarkingUnread] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const isArchived = (conversation as any).isArchived === true;
   const alreadyUnread = (conversation.unreadCount ?? 0) > 0;
+  const organizations = useAuthStore((s) => s.organizations);
+  const activeOrgId = useAuthStore((s) => s.activeOrgId);
+  const currentRole = organizations.find((o) => o.id === activeOrgId)?.role;
+  const canDelete = currentRole === 'OWNER' || currentRole === 'ADMIN';
 
   const { data: tags = [], isLoading } = useQuery({
     queryKey: ['tags', orgId],
@@ -359,6 +367,19 @@ export function ConversationContextMenu({
             )}
             <span className="flex-1">{isArchived ? 'Desarquivar' : 'Arquivar'}</span>
           </button>
+
+          {canDelete && (
+            <>
+              <div className="mx-2 my-1 border-t border-zinc-100 dark:border-zinc-800" />
+              <button
+                onClick={() => setDeleteOpen(true)}
+                className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+              >
+                <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                <span className="flex-1">Apagar conversa</span>
+              </button>
+            </>
+          )}
         </>
       )}
 
@@ -537,6 +558,14 @@ export function ConversationContextMenu({
         open={renameOpen}
         onClose={() => {
           setRenameOpen(false);
+          onClose();
+        }}
+      />
+      <DeleteConversationDialog
+        conversation={conversation}
+        open={deleteOpen}
+        onClose={() => {
+          setDeleteOpen(false);
           onClose();
         }}
       />
