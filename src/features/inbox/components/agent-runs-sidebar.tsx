@@ -164,7 +164,7 @@ export function AgentRunsSidebar({
   };
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <aside className="hidden w-80 shrink-0 flex-col border-l border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:flex">
       <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
         <div className="flex items-center gap-2">
           <Activity className="h-3.5 w-3.5 text-primary" />

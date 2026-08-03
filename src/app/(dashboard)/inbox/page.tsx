@@ -134,14 +134,20 @@ export default function InboxPage() {
 
   return (
     <div className="flex h-full">
-      <ConversationList
-        activeId={activeConversation?.id || null}
-        onSelect={setActiveConversation}
-        viewId={viewId}
-      />
+      {/*
+        Mobile (< lg): lista OU conversa, nunca as duas — igual WhatsApp.
+        Desktop (lg+): lado a lado, como sempre foi.
+      */}
+      <div className={`${activeConversation ? 'hidden lg:flex' : 'flex'} h-full w-full lg:w-auto`}>
+        <ConversationList
+          activeId={activeConversation?.id || null}
+          onSelect={setActiveConversation}
+          viewId={viewId}
+        />
+      </div>
 
       {activeConversation ? (
-        <>
+        <div className="flex h-full w-full min-w-0 lg:w-auto lg:flex-1">
           <ChatPanel
             key={activeConversation.id}
             conversation={activeConversation}
@@ -150,6 +156,7 @@ export default function InboxPage() {
             agentLogsOpen={agentLogsOpen}
             onToggleProject={toggleProjectPanel}
             projectOpen={projectPanelOpen}
+            onBack={() => setActiveConversation(null)}
           />
           {agentLogsOpen && (
             <AgentRunsSidebar
@@ -165,9 +172,9 @@ export default function InboxPage() {
               onClose={toggleProjectPanel}
             />
           )}
-        </>
+        </div>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-900/50">
+        <div className="hidden flex-1 flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-900/50 lg:flex">
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800">
             <MessageSquare className="h-10 w-10 text-zinc-300 dark:text-zinc-600" />
           </div>

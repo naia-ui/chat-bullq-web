@@ -844,7 +844,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
   };
 
   return (
-    <div className="flex h-full w-80 flex-col border-r border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex h-full w-full flex-col border-r border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:w-80">
       {/* Scope selector (All / Mine) */}
       <div className="px-3 pt-3">
         <Popover className="relative">

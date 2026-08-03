@@ -14,6 +14,7 @@ import {
   Send,
   Activity,
   FolderKanban,
+  ArrowLeft,
 } from 'lucide-react';
 import { ConversationAiToggle } from './conversation-ai-toggle';
 import { AssignmentPopover } from './assignment-popover';
@@ -30,6 +31,8 @@ interface ConversationHeaderProps {
   /** When provided + conversation is a group, renders the Project panel toggle. */
   onToggleProject?: () => void;
   projectOpen?: boolean;
+  /** Mobile only: renders a back arrow that returns to the conversation list. */
+  onBack?: () => void;
 }
 
 function ChannelBadge({ type, name }: { type: string; name: string }) {
@@ -106,6 +109,7 @@ export function ConversationHeader({
   agentLogsOpen,
   onToggleProject,
   projectOpen,
+  onBack,
 }: ConversationHeaderProps) {
   const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
@@ -147,7 +151,16 @@ export function ConversationHeader({
 
   return (
     <div className="flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-3">
+        {onBack && (
+          <button
+            onClick={onBack}
+            aria-label="Voltar para a lista de conversas"
+            className="-ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 lg:hidden"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
         <HeaderAvatar
           name={conversation.contact.name}
           avatarUrl={conversation.contact.avatarUrl}
