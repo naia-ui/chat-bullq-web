@@ -120,7 +120,7 @@ export function RegisterForm() {
             id="name"
             type="text"
             autoComplete="name"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:text-sm"
             placeholder="Seu nome"
             {...form.register('name')}
           />
@@ -140,7 +140,7 @@ export function RegisterForm() {
             type="email"
             autoComplete="email"
             readOnly={!!inviteInfo}
-            className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:text-sm ${
               inviteInfo ? 'cursor-not-allowed bg-muted' : ''
             }`}
             placeholder="seu@email.com"
@@ -161,7 +161,7 @@ export function RegisterForm() {
             id="password"
             type="password"
             autoComplete="new-password"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:text-sm"
             placeholder="Mínimo 6 caracteres"
             {...form.register('password')}
           />
@@ -180,7 +180,7 @@ export function RegisterForm() {
             id="confirmPassword"
             type="password"
             autoComplete="new-password"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:text-sm"
             placeholder="Repita a senha"
             {...form.register('confirmPassword')}
           />

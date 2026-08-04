@@ -134,7 +134,7 @@ export function RenameConversationDialog({ conversation, open, onClose }: Props)
               onChange={(e) => setContactName(e.target.value)}
               disabled={saving}
               placeholder={conversation.contact?.phone ?? 'Sem nome'}
-              className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
               autoFocus
             />
           </div>
@@ -154,7 +154,7 @@ export function RenameConversationDialog({ conversation, open, onClose }: Props)
               disabled={saving}
               placeholder="ex: liberou ontem, aguardando feedback"
               maxLength={120}
-              className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none transition-colors placeholder:text-zinc-400 focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
             />
           </div>
         </div>

@@ -104,7 +104,7 @@ export function DeleteConversationDialog({ conversation, open, onClose }: Props)
               onChange={(e) => setConfirmText(e.target.value)}
               disabled={deleting || !expected}
               placeholder={expected}
-              className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none transition-colors placeholder:text-zinc-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
               autoFocus
             />
           </div>

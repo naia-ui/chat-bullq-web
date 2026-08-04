@@ -250,7 +250,7 @@ export function ForwardMessageDialog({ message, originChannel, onClose }: Props)
                 onChange={(e) => setNewPhone(e.target.value)}
                 disabled={sending}
                 placeholder="5511999999999"
-                className="min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                className="min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
               />
               <select
                 value={newChannelId}
@@ -283,7 +283,7 @@ export function ForwardMessageDialog({ message, originChannel, onClose }: Props)
               onChange={(e) => setSearch(e.target.value)}
               disabled={sending}
               placeholder="Buscar conversa..."
-              className="w-full rounded-md border border-zinc-200 bg-white py-2 pl-8 pr-3 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="w-full rounded-md border border-zinc-200 bg-white py-2 pl-8 pr-3 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
             />
           </div>
 

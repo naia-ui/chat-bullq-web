@@ -147,7 +147,7 @@ export function CardDialog({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="ex: Lead Bravy School"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
             />
           </div>
 
@@ -160,7 +160,7 @@ export function CardDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="contexto, próximos passos, info coletada…"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
             />
           </div>
 
@@ -172,7 +172,7 @@ export function CardDialog({
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="ex: 4500"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
               inputMode="decimal"
             />
           </div>
@@ -190,7 +190,7 @@ export function CardDialog({
                     ? 'ex: assinou contrato 12 meses'
                     : 'ex: optou por concorrente'
                 }
-                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
               />
             </div>
           )}

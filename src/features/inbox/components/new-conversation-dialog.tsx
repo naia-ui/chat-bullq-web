@@ -240,7 +240,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: Props) {
                     }
                     disabled={sending}
                     placeholder={isGmail ? 'cliente@exemplo.com' : '5511999999999'}
-                    className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
                     autoFocus
                   />
                 </div>
@@ -254,7 +254,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: Props) {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       disabled={sending}
-                      className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
                     />
                   </div>
                 )}
@@ -270,7 +270,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: Props) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     disabled={sending}
-                    className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
                   />
                 </div>
               )}
@@ -286,7 +286,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: Props) {
                     onChange={(e) => setSubject(e.target.value)}
                     disabled={sending}
                     placeholder="Sem assunto = usa a 1ª linha da mensagem"
-                    className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
                   />
                 </div>
               )}
@@ -304,7 +304,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: Props) {
                     value={templateName}
                     onChange={(e) => setTemplateName(e.target.value)}
                     disabled={sending}
-                    className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
                   >
                     <option value="">
                       {templates ? 'Selecione um template' : 'Carregando templates...'}
@@ -332,7 +332,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: Props) {
                       }}
                       disabled={sending}
                       placeholder={`Variável {{${i + 1}}}`}
-                      className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                      className="mt-1.5 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
                     />
                   ))}
                 </div>
@@ -347,7 +347,7 @@ export function NewConversationDialog({ open, onClose, onCreated }: Props) {
                     disabled={sending}
                     rows={4}
                     placeholder="Escreva a primeira mensagem..."
-                    className="mt-1.5 w-full resize-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="mt-1.5 w-full resize-none rounded-md border border-zinc-200 bg-white px-3 py-2 text-base outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 lg:text-sm"
                   />
                 </div>
               )}
