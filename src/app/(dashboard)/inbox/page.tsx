@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { MessageSquare } from 'lucide-react';
+import { useMobileTopBar } from '@/components/ui/sidebar-layout';
 import { ConversationList } from '@/features/inbox/components/conversation-list';
 import { ChatPanel } from '@/features/inbox/components/chat-panel';
 import { AgentRunsSidebar } from '@/features/inbox/components/agent-runs-sidebar';
@@ -18,6 +19,10 @@ export default function InboxPage() {
   const viewId = searchParams.get('view');
   const deepLinkConvId = searchParams.get('conversationId');
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const setMobileTopBarHidden = useMobileTopBar();
+  useEffect(() => {
+    setMobileTopBarHidden(!!activeConversation);
+  }, [activeConversation, setMobileTopBarHidden]);
   // Persisted across sessions via localStorage so each operator keeps their
   // preferred layout (some live with the sidebar open, others want the chat
   // full width). Read on mount, write whenever it flips.

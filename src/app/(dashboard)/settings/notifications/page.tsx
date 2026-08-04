@@ -153,7 +153,8 @@ export default function SettingsNotificationsPage() {
 
         {/* Notification matrix */}
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Tipo de notificação</th>
@@ -206,6 +207,7 @@ export default function SettingsNotificationsPage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>

@@ -26,6 +26,22 @@ export function useSidebarCollapse() {
   return useContext(SidebarCollapseContext);
 }
 
+// Lets a page (e.g. an open chat on mobile) hide the mobile top bar so its
+// own header isn't stacked under the hamburger bar, wasting vertical space
+// on small screens. No-op above the lg breakpoint, where the bar is already
+// hidden by CSS.
+const MobileTopBarContext = createContext<((hidden: boolean) => void) | null>(
+  null,
+);
+export function useMobileTopBar() {
+  const setHidden = useContext(MobileTopBarContext);
+  useEffect(() => {
+    return () => setHidden?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return setHidden ?? (() => {});
+}
+
 interface SidebarLayoutProps {
   sidebar: ReactNode;
   navbar?: ReactNode;
@@ -39,6 +55,7 @@ export function SidebarLayout({
 }: SidebarLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileTopBarHidden, setMobileTopBarHidden] = useState(false);
 
   useEffect(() => {
     setCollapsed(localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true");
@@ -122,23 +139,27 @@ export function SidebarLayout({
           collapsed ? "lg:pl-0" : "lg:pl-64"
         }`}
       >
-        {/* Mobile header */}
-        <div className="flex items-center gap-4 border-b border-zinc-950/5 px-4 py-2.5 dark:border-white/5 lg:hidden">
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Abrir menu"
-            className="text-zinc-500 hover:text-zinc-950 dark:hover:text-white"
-          >
-            <Menu className="size-5" />
-          </button>
-          <div className="min-w-0 flex-1">{navbar}</div>
-        </div>
+        {/* Mobile header — hidden when a page (e.g. an open chat) claims the space */}
+        {!mobileTopBarHidden && (
+          <div className="flex items-center gap-4 border-b border-zinc-950/5 px-4 py-2.5 dark:border-white/5 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Abrir menu"
+              className="text-zinc-500 hover:text-zinc-950 dark:hover:text-white"
+            >
+              <Menu className="size-5" />
+            </button>
+            <div className="min-w-0 flex-1">{navbar}</div>
+          </div>
+        )}
 
         {/* Page content */}
         <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden lg:bg-white lg:shadow-sm lg:ring-1 lg:ring-zinc-950/5 dark:lg:bg-zinc-900 dark:lg:ring-white/10">
           <SidebarCollapseContext.Provider value={{ collapsed, toggle: toggleCollapsed }}>
-            {children}
+            <MobileTopBarContext.Provider value={setMobileTopBarHidden}>
+              {children}
+            </MobileTopBarContext.Provider>
           </SidebarCollapseContext.Provider>
         </div>
       </main>
