@@ -78,7 +78,7 @@ export default function SettingsApiKeysPage() {
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             placeholder="Ex: Claude Code MCP, Backup Script, Zapier..."
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
           />
         </div>
         <button

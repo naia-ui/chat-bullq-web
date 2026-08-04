@@ -164,7 +164,7 @@ export function EditAgentDialog({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
             />
           </div>
 
@@ -176,7 +176,7 @@ export function EditAgentDialog({
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
             />
           </div>
 
@@ -187,7 +187,7 @@ export function EditAgentDialog({
             <select
               value={modelId}
               onChange={(e) => setModelId(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
             >
               {CURATED_MODELS.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -208,7 +208,7 @@ export function EditAgentDialog({
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={10}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-xs"
             />
           </div>
 
@@ -277,7 +277,7 @@ export function EditAgentDialog({
                 <select
                   value={parentAgentId}
                   onChange={(e) => setParentAgentId(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
                 >
                   <option value="">— Raiz / sem chefe (CEO virtual) —</option>
                   {(allAgents ?? [])
@@ -299,7 +299,7 @@ export function EditAgentDialog({
                   <select
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
                   >
                     <option value="">— Não definido —</option>
                     {DEPARTMENTS.map((d) => (
@@ -318,7 +318,7 @@ export function EditAgentDialog({
                     value={squad}
                     onChange={(e) => setSquad(e.target.value)}
                     placeholder="Ex: Inbound B2C"
-                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
                   />
                 </div>
               </div>

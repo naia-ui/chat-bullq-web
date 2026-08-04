@@ -277,7 +277,7 @@ export function AutomationBuilder({
           <section className="space-y-3">
             <Label>Nome</Label>
             <input
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-950 lg:text-sm"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Notificar João quando tag VIP for adicionada"
@@ -285,7 +285,7 @@ export function AutomationBuilder({
             />
             <Label>Descrição (opcional)</Label>
             <textarea
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-950 lg:text-sm"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -515,7 +515,7 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 const inputCls =
-  'w-full rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950';
+  'w-full rounded border border-zinc-300 px-2 py-1 text-base dark:border-zinc-700 dark:bg-zinc-950 lg:text-sm';
 
 // Renders the value side of a condition rule based on which field is
 // selected. Maps every ID-bearing field to a real-data dropdown so a
@@ -668,7 +668,7 @@ function RuleRow({
           // meaningless if user just switched to channelId).
           onChange({ field: e.target.value, value: '' })
         }
-        className="rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+        className="rounded border border-zinc-300 px-2 py-1 text-base dark:border-zinc-700 dark:bg-zinc-950 lg:text-sm"
       >
         {fields.map((f) => (
           <option key={f} value={f}>
@@ -679,7 +679,7 @@ function RuleRow({
       <select
         value={rule.op}
         onChange={(e) => onChange({ op: e.target.value as ConditionOperator })}
-        className="rounded border border-zinc-300 px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+        className="rounded border border-zinc-300 px-2 py-1 text-base dark:border-zinc-700 dark:bg-zinc-950 lg:text-sm"
       >
         {ops.map((op) => (
           <option key={op} value={op}>

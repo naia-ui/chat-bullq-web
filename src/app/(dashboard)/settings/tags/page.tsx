@@ -82,7 +82,7 @@ export default function SettingsTagsPage() {
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             placeholder="Ex: VIP, Urgente, Lead..."
-            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+            className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
           />
         </div>
         <div>
@@ -125,7 +125,7 @@ export default function SettingsTagsPage() {
                   <input
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="flex-1 rounded-md border border-zinc-300 bg-white px-2 py-1 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
                   />
                   <div className="flex gap-1">
                     {PRESET_COLORS.map((c) => (

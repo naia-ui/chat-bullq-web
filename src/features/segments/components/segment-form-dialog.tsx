@@ -12,7 +12,7 @@ import { useOrgId } from '@/hooks/use-org-query-key';
 import { segmentsService, type Segment } from '../services/segments.service';
 
 const inputCls =
-  'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100';
+  'flex h-10 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base ring-offset-background placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm';
 const labelCls = 'text-sm font-medium text-zinc-700 dark:text-zinc-300';
 
 // Grupos são um conceito de WhatsApp — só esses canais podem compartilhar.

@@ -137,7 +137,7 @@ export function CreateAgentDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Vendas Bravy"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
             />
           </div>
 
@@ -150,7 +150,7 @@ export function CreateAgentDialog({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ex: Responde dúvidas sobre planos e fecha matrícula"
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
             />
           </div>
 
@@ -162,7 +162,7 @@ export function CreateAgentDialog({
               <select
                 value={kind}
                 onChange={(e) => setKind(e.target.value as AgentKind)}
-                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
               >
                 <option value="WORKER">Worker (atende o cliente)</option>
                 <option value="ORCHESTRATOR">
@@ -179,7 +179,7 @@ export function CreateAgentDialog({
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 placeholder="vendas / suporte / billing"
-                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
               />
             </div>
           </div>
@@ -201,7 +201,7 @@ export function CreateAgentDialog({
                 <select
                   value={parentAgentId}
                   onChange={(e) => setParentAgentId(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
                 >
                   <option value="">— Raiz / sem chefe (CEO virtual) —</option>
                   {eligibleParents.map((a) => (
@@ -220,7 +220,7 @@ export function CreateAgentDialog({
                   <select
                     value={department}
                     onChange={(e) => setDepartment(e.target.value)}
-                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
                   >
                     <option value="">— Não definido —</option>
                     {DEPARTMENTS.map((d) => (
@@ -239,7 +239,7 @@ export function CreateAgentDialog({
                     value={squad}
                     onChange={(e) => setSquad(e.target.value)}
                     placeholder="Ex: Inbound B2C"
-                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                    className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
                   />
                 </div>
               </div>
@@ -253,7 +253,7 @@ export function CreateAgentDialog({
             <select
               value={modelId}
               onChange={(e) => setModelId(e.target.value)}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
             >
               {CURATED_MODELS.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -274,7 +274,7 @@ export function CreateAgentDialog({
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={10}
-              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-base focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-xs"
             />
             <p className="mt-1 text-[11px] text-zinc-500">
               Você não precisa repetir contexto da empresa — o sistema injeta nome, canal, hora, dados do contato e memória automaticamente.

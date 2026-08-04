@@ -324,7 +324,7 @@ export default function SettingsAiPage() {
                             updated[i] = [e.target.value, to];
                             updateDay(key, { windows: updated });
                           }}
-                          className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                          className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-xs"
                         />
                         <span className="text-xs text-zinc-400">até</span>
                         <input
@@ -335,7 +335,7 @@ export default function SettingsAiPage() {
                             updated[i] = [from, e.target.value];
                             updateDay(key, { windows: updated });
                           }}
-                          className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                          className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-xs"
                         />
                         <button
                           onClick={() => removeWindow(key, i)}
@@ -376,7 +376,7 @@ export default function SettingsAiPage() {
           onChange={(e) => setOutOfHoursMessage(e.target.value)}
           rows={2}
           placeholder="Olá! No momento estamos fora do horário de atendimento. Voltamos amanhã às 9h e respondemos sua mensagem por aqui."
-          className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
         />
       </section>
 
@@ -408,7 +408,7 @@ Política de bônus:
 
 Reembolso:
 - Garantia de 7 dias. Após esse prazo, escalar pra atendimento humano.`}
-          className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs leading-relaxed dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-base leading-relaxed dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-xs"
         />
         <p className="mt-1 text-right text-[10px] text-zinc-400">
           {businessNotes.length} / 4000
@@ -429,7 +429,7 @@ Reembolso:
           value={tokenCap}
           onChange={(e) => setTokenCap(e.target.value)}
           placeholder="ex: 1000000"
-          className="mt-3 w-48 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-3 w-48 rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
         />
       </section>
 
@@ -455,7 +455,7 @@ Reembolso:
               onChange={(e) => setAllowedDomainsText(e.target.value)}
               rows={5}
               placeholder={`bravy.co\ntrivapp.com.br\nalunos.bravy.school`}
-              className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-xs leading-relaxed dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 font-mono text-base leading-relaxed dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-xs"
             />
             <p className="mt-1 text-[10px] text-zinc-400">
               Um domínio por linha. Cole sem <code>https://</code> ou <code>www.</code> — a gente normaliza.
@@ -610,7 +610,7 @@ Reembolso:
                               updated[i] = [e.target.value, to];
                               updateWatchdogDay(key, { windows: updated });
                             }}
-                            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-xs"
                           />
                           <span className="text-xs text-zinc-400">até</span>
                           <input
@@ -621,7 +621,7 @@ Reembolso:
                               updated[i] = [from, e.target.value];
                               updateWatchdogDay(key, { windows: updated });
                             }}
-                            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-xs dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                            className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-xs"
                           />
                           <button
                             onClick={() => removeWatchdogWindow(key, i)}
@@ -686,7 +686,7 @@ function NumberField({
             const v = parseInt(e.target.value, 10);
             if (!Number.isNaN(v) && v >= min && v <= max) onChange(v);
           }}
-          className="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+          className="w-20 rounded-md border border-zinc-300 bg-white px-2 py-1 text-base disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
         />
         {suffix ? (
           <span className="text-xs text-zinc-500">{suffix}</span>
