@@ -53,8 +53,11 @@ export default function ContactsPage() {
       </div>
 
       <div className="mx-auto mt-4 flex w-full max-w-5xl min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        {/* Header + corpo compartilham a rolagem horizontal, pra continuar
+            alinhados quando as colunas não cabem na tela (mobile). */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-x-auto">
         {/* Header fixo da tabela */}
-        <table className="w-full table-fixed shrink-0">
+        <table className="w-full min-w-[700px] table-fixed shrink-0">
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900/50">
               <th className="w-[30%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Contato</th>
@@ -68,7 +71,7 @@ export default function ContactsPage() {
 
         {/* Corpo scrollável */}
         <div className="flex-1 overflow-y-auto min-h-0">
-          <table className="w-full table-fixed">
+          <table className="w-full min-w-[700px] table-fixed">
             <colgroup>
               <col className="w-[30%]" />
               <col className="w-[20%]" />
@@ -149,6 +152,7 @@ export default function ContactsPage() {
               )}
             </tbody>
           </table>
+        </div>
         </div>
 
         {/* Paginação fixa no rodapé */}
