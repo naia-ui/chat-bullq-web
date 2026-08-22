@@ -40,6 +40,7 @@ export function EditAgentDialog({
   const [operationalContextUpdatedAt, setOperationalContextUpdatedAt] = useState<
     string | null
   >(null);
+  const [handoffAlertPhone, setHandoffAlertPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [showAddChannel, setShowAddChannel] = useState(false);
   const [newChannelId, setNewChannelId] = useState('');
@@ -70,6 +71,7 @@ export function EditAgentDialog({
     setSquad(agent.squad ?? '');
     setOperationalContext(agent.operationalContext ?? '');
     setOperationalContextUpdatedAt(agent.operationalContextUpdatedAt ?? null);
+    setHandoffAlertPhone(agent.handoffAlertPhone ?? '');
   }, [agent]);
 
   if (!agent) return null;
@@ -87,6 +89,7 @@ export function EditAgentDialog({
         department: department || null,
         squad: squad.trim() || null,
         operationalContext: operationalContext.trim() || null,
+        handoffAlertPhone: handoffAlertPhone.trim() || null,
       });
       toast.success('Agente atualizado');
       onSaved();
@@ -243,6 +246,27 @@ export function EditAgentDialog({
             <p className="mt-1 text-right text-[10px] text-amber-700/60 dark:text-amber-300/60">
               {operationalContext.length}/8000
             </p>
+          </div>
+
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Aviso de plantão (WhatsApp)
+            </p>
+            <p className="mt-0.5 text-[11px] text-zinc-500">
+              Quando esse agente transfere a conversa pra atendimento humano,
+              esse número recebe um aviso na hora. Troque sempre que mudar
+              quem está de plantão — não precisa mexer em nada além disso.
+              Fica ao lado de quaisquer números fixos já configurados
+              (nenhum substitui o outro).
+            </p>
+            <input
+              type="tel"
+              value={handoffAlertPhone}
+              onChange={(e) => setHandoffAlertPhone(e.target.value)}
+              placeholder="5551999999999 (DDI+DDD+número, sem espaço/traço)"
+              maxLength={20}
+              className="mt-3 w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-base dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 lg:text-sm"
+            />
           </div>
 
           <div>

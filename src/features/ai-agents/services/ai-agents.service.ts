@@ -69,6 +69,9 @@ export interface AiAgent {
   operationalContext: string | null;
   /** Quando foi a última vez que `operationalContext` mudou. */
   operationalContextUpdatedAt: string | null;
+  /** WhatsApp que recebe o ping quando ESSE agente transfere pra humano
+   *  (plantão do dia) — somado aos números fixos do env, não substitui. */
+  handoffAlertPhone: string | null;
   createdAt: string;
   updatedAt: string;
   channels?: AgentChannelLink[];
@@ -90,6 +93,7 @@ export interface CreateAgentInput {
   department?: string | null;
   squad?: string | null;
   operationalContext?: string | null;
+  handoffAlertPhone?: string | null;
 }
 
 export interface AgentRun {
