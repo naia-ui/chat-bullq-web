@@ -71,7 +71,13 @@ export default function DashboardLayout({
     >
       <div className="flex h-full flex-col">
         <ToolFailureBanner />
-        <div className="flex-1 min-h-0">{children}</div>
+        {/* overflow-y-auto: sem isso, páginas mais altas que a viewport
+         * (Configurações, formulários longos) ficavam cortadas sem
+         * nenhuma barra de rolagem — o conteúdo simplesmente sumia
+         * abaixo da dobra. Páginas com rolagem própria (Inbox) usam
+         * h-full internamente e não são afetadas, porque nunca excedem
+         * a altura deste container. */}
+        <div className="flex-1 min-h-0 overflow-y-auto">{children}</div>
       </div>
     </SidebarLayout>
   );
