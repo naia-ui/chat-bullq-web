@@ -43,6 +43,7 @@ const COLORS = [
 ];
 
 const STATUSES = [
+  { value: 'BOT', label: 'IA respondendo' },
   { value: 'PENDING', label: 'Pendente' },
   { value: 'OPEN', label: 'Aberta' },
   { value: 'WAITING', label: 'Aguardando' },
@@ -70,6 +71,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
   const [assignedTo, setAssignedTo] = useState<string>('any');
   const [kind, setKind] = useState<'' | 'INDIVIDUAL' | 'GROUP'>('');
   const [tagIds, setTagIds] = useState<string[]>([]);
+  const [unreadOnly, setUnreadOnly] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const { data: channels = [] } = useQuery({
@@ -94,6 +96,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
       setAssignedTo(view.filters?.assignedTo ?? 'any');
       setKind(view.filters?.kind ?? '');
       setTagIds(view.filters?.tagIds ?? []);
+      setUnreadOnly(view.filters?.unreadOnly ?? false);
     } else {
       setName('');
       setIcon('Filter');
@@ -103,6 +106,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
       setAssignedTo('any');
       setKind('');
       setTagIds([]);
+      setUnreadOnly(false);
     }
   }, [view, open]);
 
@@ -128,6 +132,7 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
     if (assignedTo && assignedTo !== 'any') filters.assignedTo = assignedTo;
     if (kind) filters.kind = kind;
     if (tagIds.length) filters.tagIds = tagIds;
+    if (unreadOnly) filters.unreadOnly = true;
 
     setSaving(true);
     try {
@@ -273,6 +278,22 @@ export function InboxViewDialog({ open, view, onClose, onSaved }: Props) {
             </div>
             <p className="mt-1 text-[10px] text-zinc-400">
               Vazio = todos os status.
+            </p>
+          </div>
+
+          <div>
+            <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              <input
+                type="checkbox"
+                checked={unreadOnly}
+                onChange={(e) => setUnreadOnly(e.target.checked)}
+                className="size-3.5"
+              />
+              Só conversas não lidas
+            </label>
+            <p className="mt-1 text-[10px] text-zinc-400">
+              Combina com o filtro de status acima — ex: "IA respondendo" +
+              "só não lidas" = leads novos que a IA já está tratando.
             </p>
           </div>
 
