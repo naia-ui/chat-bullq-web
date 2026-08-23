@@ -414,6 +414,18 @@ export const CURATED_MODELS = [
     badge: 'Tarefas simples · OpenAI, mais barato',
     recommendedFor: 'orchestrator',
   },
+  {
+    id: 'google/gemini-flash-lite-latest',
+    label: 'Gemini Flash Lite',
+    badge: 'Tarefas simples · Google, mais barato',
+    recommendedFor: 'orchestrator',
+  },
+  // Outros modelos Gemini (gemini-flash-latest, -pro) "pensam" por padrão
+  // e cobram bem mais caro por isso (achado real: 700+ tokens de
+  // pensamento pra 9 de resposta) — não listados até revisitar o controle
+  // de custo desses. gemini-flash-lite-latest é o único validado ao vivo,
+  // sem gasto extra de pensamento e com chamada de ferramentas testada
+  // (22/08/2026).
 ] as const;
 
 export function formatModelLabel(modelId: string): string {
