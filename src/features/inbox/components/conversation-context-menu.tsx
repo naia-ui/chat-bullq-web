@@ -19,12 +19,14 @@ import {
   Mail,
   X,
   Trash2,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { tagsService, type Tag } from '@/features/settings/services/tags.service';
 import { useOrgId } from '@/hooks/use-org-query-key';
 import { pipelinesService } from '@/features/pipelines/services/pipelines.service';
 import { inboxViewsService, type InboxView } from '@/features/inbox-views/services/inbox-views.service';
+import { departmentsService } from '@/features/departments/services/departments.service';
 import { inboxService } from '../services/inbox.service';
 import type { Conversation } from '../services/inbox.service';
 import { RenameConversationDialog } from './rename-conversation-dialog';
@@ -50,10 +52,11 @@ export function ConversationContextMenu({
   const queryClient = useQueryClient();
   const orgId = useOrgId();
   const ref = useRef<HTMLDivElement>(null);
-  const [view, setView] = useState<'root' | Target | 'pipeline' | 'inbox-views'>('root');
+  const [view, setView] = useState<'root' | Target | 'pipeline' | 'inbox-views' | 'department'>('root');
   const [pendingTagId, setPendingTagId] = useState<string | null>(null);
   const [pendingPipelineId, setPendingPipelineId] = useState<string | null>(null);
   const [pendingViewId, setPendingViewId] = useState<string | null>(null);
+  const [pendingDepartmentId, setPendingDepartmentId] = useState<string | null>(null);
   const [archiving, setArchiving] = useState(false);
   const [markingUnread, setMarkingUnread] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -99,6 +102,30 @@ export function ConversationContextMenu({
     }
     return set;
   }, [inboxViewsRaw, conversation.id]);
+
+  const { data: departments = [], isLoading: departmentsLoading } = useQuery({
+    queryKey: ['departments', orgId],
+    queryFn: () => departmentsService.list(),
+    enabled: view === 'department',
+  });
+  const currentDepartmentId = conversation.departmentId ?? null;
+
+  const transferTo = async (departmentId: string | null, name: string) => {
+    setPendingDepartmentId(departmentId ?? 'none');
+    try {
+      await inboxService.transferToDepartment(conversation.id, departmentId);
+      toast.success(
+        departmentId ? `Transferida para ${name}` : 'Devolvida à caixa de entrada',
+      );
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: ['conversations-department-counts'] });
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erro ao transferir conversa');
+    } finally {
+      setPendingDepartmentId(null);
+    }
+  };
 
   const appliedConversation = useMemo(
     () => new Set((conversation.tags ?? []).map((t) => t.tag.id)),
@@ -310,6 +337,19 @@ export function ConversationContextMenu({
             Organizar
           </div>
           <button
+            onClick={() => setView('department')}
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+          >
+            <Building2 className="h-3.5 w-3.5 shrink-0 text-zinc-500 dark:text-zinc-400" />
+            <span className="flex-1">Transferir para área</span>
+            {conversation.department && (
+              <span className="max-w-[72px] truncate text-[10px] font-medium text-primary">
+                {conversation.department.name}
+              </span>
+            )}
+            <ChevronRight className="h-3.5 w-3.5 text-zinc-400" />
+          </button>
+          <button
             onClick={() => setView('inbox-views')}
             className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
           >
@@ -380,6 +420,63 @@ export function ConversationContextMenu({
               </button>
             </>
           )}
+        </>
+      )}
+
+      {view === 'department' && (
+        <>
+          <button
+            onClick={() => setView('root')}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-[11px] font-medium uppercase tracking-wider text-zinc-400 transition-colors hover:bg-zinc-50 dark:text-zinc-500 dark:hover:bg-zinc-800/60"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            Transferir para área
+          </button>
+          <div className="mx-2 my-1 border-t border-zinc-100 dark:border-zinc-800" />
+          <div
+            className="overflow-y-auto scrollbar-thin"
+            style={{ maxHeight: MENU_MAX_HEIGHT - 80 }}
+          >
+            <button
+              onClick={() => transferTo(null, 'Caixa de entrada')}
+              disabled={pendingDepartmentId !== null || currentDepartmentId === null}
+              className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+            >
+              <InboxIcon className="h-3.5 w-3.5 shrink-0 text-zinc-500 dark:text-zinc-400" />
+              <span className="flex-1">Caixa de entrada</span>
+              {pendingDepartmentId === 'none' ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />
+              ) : currentDepartmentId === null ? (
+                <Check className="h-3.5 w-3.5 text-primary" />
+              ) : null}
+            </button>
+            {departmentsLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />
+              </div>
+            ) : departments.length === 0 ? (
+              <p className="px-3 py-3 text-center text-[11px] text-zinc-400">
+                Nenhuma área cadastrada
+              </p>
+            ) : (
+              departments.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => transferTo(d.id, d.name)}
+                  disabled={pendingDepartmentId !== null || currentDepartmentId === d.id}
+                  className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-left text-[13px] text-zinc-700 transition-colors hover:bg-zinc-50 disabled:opacity-60 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+                >
+                  <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span className="flex-1 truncate">{d.name}</span>
+                  {pendingDepartmentId === d.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-zinc-400" />
+                  ) : currentDepartmentId === d.id ? (
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                  ) : null}
+                </button>
+              ))
+            )}
+          </div>
         </>
       )}
 

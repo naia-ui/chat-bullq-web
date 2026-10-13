@@ -32,6 +32,7 @@ import {
   PopoverButton,
   PopoverPanel,
 } from '@headlessui/react';
+import { departmentsService } from '@/features/departments/services/departments.service';
 import { inboxService, type Conversation } from '../services/inbox.service';
 import {
   inboxViewsService,
@@ -160,6 +161,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     (mineProjects ? 1 : 0) +
     selectedTagIds.length;
   const [scope, setScope] = useState<ScopeFilter>('ALL');
+  // Área selecionada na faixa de abas: 'none' = caixa de entrada geral (sem
+  // área), 'all' = tudo, ou o id de um Department. Só vale fora de views.
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('none');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const hydratedRef = useRef(false);
@@ -309,7 +313,7 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
     () => [...selectedTagIds].sort().join(','),
     [selectedTagIds],
   );
-  const filterKey = `${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${showGroups ? 'g' : ''}|ps:${selectedProjectStatus}|mp:${mineProjects ? '1' : ''}|t:${tagsKey}`;
+  const filterKey = `${unreadOnly ? 'u' : ''}|${archivedOnly ? 'a' : ''}|${showGroups ? 'g' : ''}|ps:${selectedProjectStatus}|mp:${mineProjects ? '1' : ''}|t:${tagsKey}|d:${selectedDepartment}`;
 
   const handleSearchChange = useCallback((value: string) => {
     setSearch(value);
@@ -323,6 +327,19 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+
+  const { data: departments = [] } = useQuery({
+    queryKey: ['departments', orgId],
+    queryFn: () => departmentsService.list(),
+    staleTime: 60000,
+  });
+  const { data: departmentCounts = {} } = useQuery({
+    queryKey: ['conversations-department-counts', orgId],
+    queryFn: () => inboxService.getDepartmentCounts(),
+    enabled: !viewId,
+    refetchInterval: 60000,
+    staleTime: 15000,
+  });
 
   const { data: channels = [] } = useQuery({
     queryKey: ['channels', orgId],
@@ -417,6 +434,9 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
       if (debouncedSearch) params.search = debouncedSearch;
       if (selectedTagIds.length > 0) params.tagIds = selectedTagIds.join(',');
       if (scope === 'MINE' && currentUserId) params.assignedToId = currentUserId;
+      if (!viewId && selectedDepartment !== 'all') {
+        params.departmentId = selectedDepartment;
+      }
       if (viewId) {
         return inboxViewsService.getConversations(viewId, params);
       }
@@ -1234,6 +1254,43 @@ export function ConversationList({ activeId, onSelect, viewId }: ConversationLis
           <MessageSquarePlus className="h-3.5 w-3.5" />
         </button>
       </div>
+
+      {/* Abas por área: Caixa de entrada (sem área) | Direito Médico | ... | Todas */}
+      {!viewId && (
+        <div className="flex gap-1 overflow-x-auto px-3 pb-2 scrollbar-thin">
+          {[
+            { id: 'none', label: 'Caixa de entrada' },
+            ...departments.map((d) => ({ id: d.id, label: d.name })),
+            { id: 'all', label: 'Todas' },
+          ].map((tab) => {
+            const active = selectedDepartment === tab.id;
+            const count = tab.id === 'all' ? 0 : (departmentCounts[tab.id] ?? 0);
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setSelectedDepartment(tab.id)}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                  active
+                    ? 'bg-primary text-white'
+                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                }`}
+              >
+                {tab.label}
+                {count > 0 && (
+                  <span
+                    className={`rounded-full px-1.5 py-[2px] text-[10px] leading-none ${
+                      active ? 'bg-white/25' : 'bg-zinc-200 dark:bg-zinc-700'
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Active filter chips */}
       {activeFilterCount > 0 && (

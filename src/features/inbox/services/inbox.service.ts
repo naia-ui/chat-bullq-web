@@ -45,6 +45,9 @@ export interface Conversation {
   channelId: string;
   contactId: string;
   assignedToId: string | null;
+  /** Área (Department) para a qual a conversa foi transferida. null = caixa de entrada geral. */
+  departmentId?: string | null;
+  department?: { id: string; name: string } | null;
   status: string;
   protocol: string | null;
   subject?: string | null;
@@ -149,6 +152,24 @@ export const inboxService = {
   }> {
     const { data } = await api.get('/conversations', { params });
     return data.data;
+  },
+
+  /**
+   * Transfere a conversa para uma área (sai da caixa de entrada geral) ou,
+   * com `null`, devolve à caixa de entrada.
+   */
+  async transferToDepartment(
+    id: string,
+    departmentId: string | null,
+  ): Promise<Conversation> {
+    const { data } = await api.patch(`/conversations/${id}`, { departmentId });
+    return data.data;
+  },
+
+  /** Conversas abertas por área; chave 'none' = caixa de entrada geral. */
+  async getDepartmentCounts(): Promise<Record<string, number>> {
+    const { data } = await api.get('/conversations/department-counts');
+    return data.data ?? {};
   },
 
   async getConversation(id: string): Promise<Conversation> {
